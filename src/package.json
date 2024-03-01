@@ -2,7 +2,6 @@
   "name": "src",
   "private": true,
   "sideEffects": false,
-  "type": "module",
   "scripts": {
     "build": "remix build",
     "watch-scss": "sass --watch app/:app/",
@@ -22,6 +21,7 @@
     "@remix-run/node": "^2.8.0",
     "@remix-run/react": "^2.8.0",
     "@remix-run/serve": "^2.8.0",
+    "@remix-run/server-runtime": "^2.8.0",
     "isbot": "^4.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"

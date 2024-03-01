@@ -11,6 +11,13 @@ import { createReadableStreamFromReadable } from "@remix-run/node";
 import { RemixServer } from "@remix-run/react";
 import { isbot } from "isbot";
 import { renderToPipeableStream } from "react-dom/server";
+import * as React from 'react';
+import * as ReactDOMServer from 'react-dom/server';
+import createEmotionCache from './components/create.emotion.cache';
+import CssBaseline from '@mui/material/CssBaseline';
+import { ThemeProvider } from '@mui/material/styles';
+import { CacheProvider } from '@emotion/react';
+import createEmotionServer from '@emotion/server/create-instance';
 
 const ABORT_DELAY = 5_000;
 
@@ -26,17 +33,17 @@ export default function handleRequest(
 ) {
   return isbot(request.headers.get("user-agent") || "")
     ? handleBotRequest(
-        request,
-        responseStatusCode,
-        responseHeaders,
-        remixContext
-      )
+      request,
+      responseStatusCode,
+      responseHeaders,
+      remixContext
+    )
     : handleBrowserRequest(
-        request,
-        responseStatusCode,
-        responseHeaders,
-        remixContext
-      );
+      request,
+      responseStatusCode,
+      responseHeaders,
+      remixContext
+    );
 }
 
 function handleBotRequest(
@@ -97,12 +104,15 @@ function handleBrowserRequest(
 ) {
   return new Promise((resolve, reject) => {
     let shellRendered = false;
+    const cache = createEmotionCache();
+    const { extractCriticalToChunks } = createEmotionServer(cache);
+
     const { pipe, abort } = renderToPipeableStream(
-      <RemixServer
-        context={remixContext}
-        url={request.url}
-        abortDelay={ABORT_DELAY}
-      />,
+      <CacheProvider value={cache}>
+        {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
+        <CssBaseline />
+        <RemixServer context={remixContext} url={request.url} abortDelay={ABORT_DELAY} />
+      </CacheProvider>,
       {
         onShellReady() {
           shellRendered = true;

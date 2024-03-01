@@ -1,47 +1,25 @@
-import type { MetaFunction } from "@remix-run/node";
-import type { LinksFunction } from "@remix-run/node";
-import styles from "~/styles/shared.css";
+import * as React from 'react';
+import type { MetaFunction } from '@remix-run/node';
+import { Link } from '@remix-run/react';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
 
-export const links: LinksFunction = () => [
-  { rel: "stylesheet", href: styles, loader: "sass" },
+// https://remix.run/docs/en/main/route/meta
+export const meta: MetaFunction = () => [
+  { title: 'Remix Starter' },
+  { name: 'description', content: 'Welcome to remix!' },
 ];
 
-export const meta: MetaFunction = () => {
-  return [
-    { title: "New Remix App" },
-    { name: "description", content: "Welcome to Remix!" },
-  ];
-};
-
+// https://remix.run/docs/en/main/file-conventions/routes#basic-routes
 export default function Index() {
   return (
-    <div style={{ fontFamily: "system-ui, sans-serif", lineHeight: "1.8" }}>
-      <h1>Welcome to Remix</h1>
-      <ul>
-        <li>
-          <a
-            target="_blank"
-            href="https://remix.run/tutorials/blog"
-            rel="noreferrer"
-          >
-            15m Quickstart Blog Tutorial
-          </a>
-        </li>
-        <li>
-          <a
-            target="_blank"
-            href="https://remix.run/tutorials/jokes"
-            rel="noreferrer"
-          >
-            Deep Dive Jokes App Tutorial
-          </a>
-        </li>
-        <li>
-          <a target="_blank" href="https://remix.run/docs" rel="noreferrer">
-            Remix Docs
-          </a>
-        </li>
-      </ul>
-    </div>
+    <React.Fragment>
+      <Typography variant="h4" component="h1" sx={{ mb: 2 }}>
+        Material UI Remix in TypeScript example
+      </Typography>
+      <Button variant="contained" component={Link} to="/about">
+        Go to the about page
+      </Button>
+    </React.Fragment>
   );
 }
