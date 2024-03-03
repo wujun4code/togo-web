@@ -104,20 +104,29 @@ function handleBrowserRequest(
 ) {
   return new Promise((resolve, reject) => {
     let shellRendered = false;
-    const cache = createEmotionCache();
-    const { extractCriticalToChunks } = createEmotionServer(cache);
+    let didError = false;
+    const emotionCache = createEmotionCache();
 
-    const { pipe, abort } = renderToPipeableStream(
-      <CacheProvider value={cache}>
+    function App() {
+      return (<CacheProvider value={emotionCache}>
         {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
         <CssBaseline />
         <RemixServer context={remixContext} url={request.url} abortDelay={ABORT_DELAY} />
-      </CacheProvider>,
+      </CacheProvider>);
+    }
+
+    const { pipe, abort } = renderToPipeableStream(<App />,
       {
         onShellReady() {
           shellRendered = true;
-          const body = new PassThrough();
-          const stream = createReadableStreamFromReadable(body);
+
+          const reactBody = new PassThrough();
+          const emotionServer = createEmotionServer(emotionCache);
+
+          const bodyWithStyles = emotionServer.renderStylesToNodeStream();
+          reactBody.pipe(bodyWithStyles);
+          
+          const stream = createReadableStreamFromReadable(reactBody);
 
           responseHeaders.set("Content-Type", "text/html");
 
@@ -128,7 +137,7 @@ function handleBrowserRequest(
             })
           );
 
-          pipe(body);
+          pipe(reactBody);
         },
         onShellError(error: unknown) {
           reject(error);
