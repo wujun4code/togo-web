@@ -11,7 +11,7 @@ import Select, { SelectChangeEvent } from '@mui/material/Select';
 
 // https://remix.run/docs/en/main/route/meta
 export const meta: MetaFunction = () => [
-  { title: 'Remix Starter' },
+  { title: 'TOWA' },
   { name: 'description', content: 'Welcome to remix!' },
 ];
 

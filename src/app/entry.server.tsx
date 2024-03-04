@@ -19,6 +19,15 @@ import { ThemeProvider } from '@mui/material/styles';
 import { CacheProvider } from '@emotion/react';
 import createEmotionServer from '@emotion/server/create-instance';
 
+import {
+  ApolloProvider,
+  ApolloClient,
+  InMemoryCache,
+  createHttpLink,
+} from "@apollo/client";
+import { getDataFromTree } from "@apollo/client/react/ssr";
+import type { ReactElement } from "react";
+
 const ABORT_DELAY = 5_000;
 
 export default function handleRequest(
@@ -102,9 +111,8 @@ function handleBrowserRequest(
   responseHeaders: Headers,
   remixContext: EntryContext
 ) {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     let shellRendered = false;
-    let didError = false;
     const emotionCache = createEmotionCache();
 
     function App() {
@@ -115,7 +123,8 @@ function handleBrowserRequest(
       </CacheProvider>);
     }
 
-    const { pipe, abort } = renderToPipeableStream(<App />,
+
+    const { pipe, abort } = renderToPipeableStream(await wrapRemixServerWithApollo(<App />, request),
       {
         onShellReady() {
           shellRendered = true;
@@ -125,7 +134,7 @@ function handleBrowserRequest(
 
           const bodyWithStyles = emotionServer.renderStylesToNodeStream();
           reactBody.pipe(bodyWithStyles);
-          
+
           const stream = createReadableStreamFromReadable(reactBody);
 
           responseHeaders.set("Content-Type", "text/html");
@@ -156,4 +165,45 @@ function handleBrowserRequest(
 
     setTimeout(abort, ABORT_DELAY);
   });
+}
+
+async function wrapRemixServerWithApollo(
+  remixServer: ReactElement,
+  request: Request,
+) {
+  const client = await getApolloClient(request);
+
+  const app = <ApolloProvider client={client}>{remixServer}</ApolloProvider>;
+
+  await getDataFromTree(app);
+  const initialState = client.extract();
+
+  const appWithData = (
+    <>
+      {app}
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `window.__APOLLO_STATE__=${JSON.stringify(
+            initialState,
+          )}`, // The replace call escapes the < character to prevent cross-site scripting attacks that are possible via the presence of </script> in a string literal
+        }}
+      />
+    </>
+  );
+  return appWithData;
+}
+
+async function getApolloClient(request: Request) {
+  const client = new ApolloClient({
+    ssrMode: true,
+    cache: new InMemoryCache(),
+    link: createHttpLink({
+      uri: 'http://localhost:3000/graphql',
+      headers: {
+        ...Object.fromEntries(request.headers),
+      },
+      credentials: request.credentials ?? "include", // or "same-origin" if your backend server is the same domain
+    }),
+  });
+  return client;
 }
