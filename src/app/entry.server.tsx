@@ -6,22 +6,19 @@
 
 import { PassThrough } from "node:stream";
 
+import { CacheProvider } from '@emotion/react';
+import createEmotionServer from '@emotion/server/create-instance';
+import CssBaseline from '@mui/material/CssBaseline';
 import type { AppLoadContext, EntryContext } from "@remix-run/node";
 import { createReadableStreamFromReadable } from "@remix-run/node";
 import { RemixServer } from "@remix-run/react";
 import { isbot } from "isbot";
-import { renderToPipeableStream } from "react-dom/server";
-import * as React from 'react';
-import * as ReactDOMServer from 'react-dom/server';
+import { renderToPipeableStream, renderToString } from "react-dom/server";
 import createEmotionCache from './components/create.emotion.cache';
-import CssBaseline from '@mui/material/CssBaseline';
-import { ThemeProvider } from '@mui/material/styles';
-import { CacheProvider } from '@emotion/react';
-import createEmotionServer from '@emotion/server/create-instance';
 
 import {
-  ApolloProvider,
   ApolloClient,
+  ApolloProvider,
   InMemoryCache,
   createHttpLink,
 } from "@apollo/client";
@@ -114,6 +111,7 @@ function handleBrowserRequest(
   return new Promise(async (resolve, reject) => {
     let shellRendered = false;
     const emotionCache = createEmotionCache();
+    const { extractCriticalToChunks } = createEmotionServer(emotionCache);
 
     function App() {
       return (<CacheProvider value={emotionCache}>
@@ -122,48 +120,69 @@ function handleBrowserRequest(
         <RemixServer context={remixContext} url={request.url} abortDelay={ABORT_DELAY} />
       </CacheProvider>);
     }
+    const apolloApp = await wrapRemixServerWithApollo(<App />, request);
+    const html = renderToString(apolloApp);
+    const { styles } = extractCriticalToChunks(html);
+    let stylesHTML = '';
 
-
-    const { pipe, abort } = renderToPipeableStream(await wrapRemixServerWithApollo(<App />, request),
-      {
-        onShellReady() {
-          shellRendered = true;
-
-          const reactBody = new PassThrough();
-          const emotionServer = createEmotionServer(emotionCache);
-
-          const bodyWithStyles = emotionServer.renderStylesToNodeStream();
-          reactBody.pipe(bodyWithStyles);
-
-          const stream = createReadableStreamFromReadable(reactBody);
-
-          responseHeaders.set("Content-Type", "text/html");
-
-          resolve(
-            new Response(stream, {
-              headers: responseHeaders,
-              status: responseStatusCode,
-            })
-          );
-
-          pipe(reactBody);
-        },
-        onShellError(error: unknown) {
-          reject(error);
-        },
-        onError(error: unknown) {
-          responseStatusCode = 500;
-          // Log streaming rendering errors from inside the shell.  Don't log
-          // errors encountered during initial shell rendering since they'll
-          // reject and get logged in handleDocumentRequest.
-          if (shellRendered) {
-            console.error(error);
-          }
-        },
-      }
+    styles.forEach(({ key, ids, css }) => {
+      const emotionKey = `${key} ${ids.join(' ')}`;
+      const newStyleTag = `<style data-emotion="${emotionKey}">${css}</style>`;
+      stylesHTML = `${stylesHTML}${newStyleTag}`;
+    });
+  
+    // Add the Emotion style tags after the insertion point meta tag
+    const markup = html.replace(
+      /<meta(\s)*name="emotion-insertion-point"(\s)*content="emotion-insertion-point"(\s)*\/>/,
+      `<meta name="emotion-insertion-point" content="emotion-insertion-point"/>${stylesHTML}`,
     );
+  
+    responseHeaders.set('Content-Type', 'text/html');
+  
+    resolve(new Response(`<!DOCTYPE html>${markup}`, {
+      status: responseStatusCode,
+      headers: responseHeaders,
+    }));
+    // const { pipe, abort } = renderToPipeableStream(await wrapRemixServerWithApollo(<App />, request),
+    //   {
+    //     onShellReady() {
+    //       shellRendered = true;
 
-    setTimeout(abort, ABORT_DELAY);
+    //       const reactBody = new PassThrough();
+    //       const emotionServer = createEmotionServer(emotionCache);
+
+    //       const bodyWithStyles = emotionServer.renderStylesToNodeStream();
+    //       reactBody.pipe(bodyWithStyles);
+
+    //       const stream = createReadableStreamFromReadable(reactBody);
+
+    //       responseHeaders.set("Content-Type", "text/html");
+
+    //       resolve(
+    //         new Response(stream, {
+    //           headers: responseHeaders,
+    //           status: responseStatusCode,
+    //         })
+    //       );
+
+    //       pipe(reactBody);
+    //     },
+    //     onShellError(error: unknown) {
+    //       reject(error);
+    //     },
+    //     onError(error: unknown) {
+    //       responseStatusCode = 500;
+    //       // Log streaming rendering errors from inside the shell.  Don't log
+    //       // errors encountered during initial shell rendering since they'll
+    //       // reject and get logged in handleDocumentRequest.
+    //       if (shellRendered) {
+    //         console.error(error);
+    //       }
+    //     },
+    //   }
+    // );
+
+    // setTimeout(abort, ABORT_DELAY);
   });
 }
 
@@ -185,7 +204,7 @@ async function wrapRemixServerWithApollo(
         dangerouslySetInnerHTML={{
           __html: `window.__APOLLO_STATE__=${JSON.stringify(
             initialState,
-          )}`, // The replace call escapes the < character to prevent cross-site scripting attacks that are possible via the presence of </script> in a string literal
+          ).replace(/</g, "\\u003c")}`, // The replace call escapes the < character to prevent cross-site scripting attacks that are possible via the presence of </script> in a string literal
         }}
       />
     </>
