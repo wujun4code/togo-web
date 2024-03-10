@@ -5,19 +5,16 @@
  */
 
 import { PassThrough } from "node:stream";
-
 import type { AppLoadContext, EntryContext } from "@remix-run/node";
 import { createReadableStreamFromReadable } from "@remix-run/node";
 import { RemixServer } from "@remix-run/react";
 import { isbot } from "isbot";
 import { renderToPipeableStream } from "react-dom/server";
-import * as React from 'react';
-import * as ReactDOMServer from 'react-dom/server';
-import createEmotionCache from './components/create.emotion.cache';
-import CssBaseline from '@mui/material/CssBaseline';
-import { ThemeProvider } from '@mui/material/styles';
+import { renderToString } from 'react-dom/server';
 import { CacheProvider } from '@emotion/react';
 import createEmotionServer from '@emotion/server/create-instance';
+import { ServerStyleContext } from './context';
+import createEmotionCache from './createEmotionCache';
 
 const ABORT_DELAY = 5_000;
 
@@ -102,49 +99,31 @@ function handleBrowserRequest(
   responseHeaders: Headers,
   remixContext: EntryContext
 ) {
-  return new Promise((resolve, reject) => {
-    let shellRendered = false;
-    const cache = createEmotionCache();
-    const { extractCriticalToChunks } = createEmotionServer(cache);
+  const cache = createEmotionCache();
+  const { extractCriticalToChunks } = createEmotionServer(cache);
 
-    const { pipe, abort } = renderToPipeableStream(
+  const html = renderToString(
+    <ServerStyleContext.Provider value={null}>
       <CacheProvider value={cache}>
-        {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
-        <CssBaseline />
-        <RemixServer context={remixContext} url={request.url} abortDelay={ABORT_DELAY} />
-      </CacheProvider>,
-      {
-        onShellReady() {
-          shellRendered = true;
-          const body = new PassThrough();
-          const stream = createReadableStreamFromReadable(body);
+        <RemixServer context={remixContext} url={request.url} />
+      </CacheProvider>
+    </ServerStyleContext.Provider>,
+  );
 
-          responseHeaders.set("Content-Type", "text/html");
+  const chunks = extractCriticalToChunks(html);
 
-          resolve(
-            new Response(stream, {
-              headers: responseHeaders,
-              status: responseStatusCode,
-            })
-          );
+  const markup = renderToString(
+    <ServerStyleContext.Provider value={chunks.styles}>
+      <CacheProvider value={cache}>
+        <RemixServer context={remixContext} url={request.url} />
+      </CacheProvider>
+    </ServerStyleContext.Provider>,
+  );
 
-          pipe(body);
-        },
-        onShellError(error: unknown) {
-          reject(error);
-        },
-        onError(error: unknown) {
-          responseStatusCode = 500;
-          // Log streaming rendering errors from inside the shell.  Don't log
-          // errors encountered during initial shell rendering since they'll
-          // reject and get logged in handleDocumentRequest.
-          if (shellRendered) {
-            console.error(error);
-          }
-        },
-      }
-    );
+  responseHeaders.set('Content-Type', 'text/html');
 
-    setTimeout(abort, ABORT_DELAY);
+  return new Response(`<!DOCTYPE html>${markup}`, {
+    status: responseStatusCode,
+    headers: responseHeaders,
   });
 }
