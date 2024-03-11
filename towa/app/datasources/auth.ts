@@ -1,0 +1,39 @@
+export interface OAuth2Config {
+    serverUrl: string;
+}
+
+export class OAuth2DataSource {
+    serverUrl: string;
+    constructor(config: OAuth2Config) {
+        this.serverUrl = config.serverUrl;
+    }
+
+    async getToken(authPath: string) {
+        try {
+            const response = await fetch(`${this.serverUrl}/${authPath}`, {
+                method: 'GET',
+                credentials: 'same-origin',
+            });
+
+            if (!response.ok) {
+                // Handle 4xx and 5xx errors
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            const { headers } = response;
+
+            let idToken = headers.get('Authorization');
+
+            if (idToken && idToken.toLowerCase().startsWith('bearer ')) {
+                idToken = idToken.slice(7);
+            }
+
+            const accessToken = headers.get('X-Auth-Request-Access-Token');
+
+            return { idToken, accessToken };
+        } catch (error) {
+            // Handle network errors or errors from the server
+            console.error('Error:', error);
+        }
+    }
+}

@@ -1,20 +1,11 @@
-## Initilize project
-
-
-### Material desaign 
+## Initialize project
 
 ```shell
-npm install @mui/material @emotion/cache @emotion/react @emotion/server @emotion/styled
+npm install
 ```
 
-### Scss
-
+## run it locally
 
 ```shell
-npm add -D sass
+npm run dev
 ```
-
-```json
-    "sass": "sass --watch app/:app/",
-```
-
