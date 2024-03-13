@@ -1,5 +1,5 @@
 import { OAuth2DataSource, GraphQLDataSource, GeoDataSource, GraphQLConfig, OAuth2Config } from '../datasources/index';
-import { WeatherService } from '../services/index';
+import { WeatherService, PostService } from '../services/index';
 
 export interface DataSources {
     oauth2: OAuth2DataSource;
@@ -8,7 +8,8 @@ export interface DataSources {
 }
 
 export interface Services {
-    weather: WeatherService
+    weather: WeatherService;
+    post: PostService;
 }
 
 export interface DataSourceConfig {
@@ -63,6 +64,7 @@ export class ClientContextValue implements ClientContext {
 
         this.services = {
             weather: new WeatherService(),
+            post: new PostService(),
         };
 
         this.node_env = serverContext.node_env;

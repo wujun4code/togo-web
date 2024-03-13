@@ -10,7 +10,7 @@ export class GraphQLDataSource {
         this.serverUrl = config.serverUrl;
     }
 
-    async query(context: ClientContext, query: string, variables: any) {
+    async query(context: ClientContext, query: string, variables?: any) {
         let accessToken = '';
         let idToken = '';
         if (context.node_env === 'development') {
@@ -38,7 +38,7 @@ export class GraphQLDataSource {
                 },
                 body: JSON.stringify({
                     query,
-                    variables,
+                    variables: variables ? variables : undefined,
                 }),
             });
 
