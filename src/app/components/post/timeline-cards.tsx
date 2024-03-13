@@ -1,10 +1,11 @@
-import React, { useState, useEffect, FC } from "react";
+import React, { useState, useEffect, useContext, FC } from "react";
 import { Textarea } from "@nextui-org/react";
 import { Button } from "@nextui-org/react";
 import { PostCard, PostCardProps } from './card';
-
+import { IClientContext } from '../../contracts/context';
 
 interface TimelineProps {
+    clientContext: IClientContext;
     load?: () => Promise<PostCardProps[]>;
 }
 
@@ -13,65 +14,66 @@ export interface TimelineState {
     data: PostCardProps[];
 }
 
-export const TimelineCards: FC<TimelineProps> = ({ load }) => {
+export const TimelineCards: FC<TimelineProps> = ({ load, clientContext }) => {
 
-    const [state, setState] = useState<TimelineState>({
-        loading: true,
-        data: []
-    });
+    const [data, setData] = useState<PostCardProps[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
 
-    const fetchData = async () => {
-        if (state.loading) return;
-        if (!load) return;
-        state.loading = true;
-        try {
-            const fetchedData = await load();
-            setState((prev) => {
-                return { ...prev, data: fetchedData, loading: false };
-            });
-        }
-        catch (error) {
-            setState((prev) => {
-                return { ...prev, loading: false };
-            });
-        }
+    const loadData = async () => {
+        const currentData = load ? await load() : await defaultLoad();
+        return currentData;
+    };
+
+    const defaultLoad = async (): Promise<PostCardProps[]> => {
+
+        const source = await clientContext.services.post.getTimeline(clientContext);
+
+        return source.map((p) => {
+            return {
+                id: p.id,
+                content: p.content,
+                postedAt: new Date(p.postedAt),
+                author: {
+                    following: {
+                        totalCount: p.authorInfo.following.totalCount,
+                    },
+                    follower: {
+                        totalCount: p.authorInfo.follower.totalCount,
+                    },
+                    followed: p.authorInfo.followRelation.followed,
+                    followingMe: p.authorInfo.followRelation.followingMe,
+                    openId: p.authorInfo.openId,
+                    snsName: p.authorInfo.snsName,
+                    friendlyName: p.authorInfo.friendlyName,
+                },
+                clientContext: clientContext
+            };
+        });
     };
 
     useEffect(() => {
-
-        fetchData();
-        
-    }, [load]);
-
-
-    const samplePosts: PostCardProps[] = [
-        {
-            content: "balabalabala",
-            postedAt: new Date(),
-            author: {
-                following:
-                {
-                    totalCount: 90,
-                },
-                follower:
-                {
-                    totalCount: 2933993,
-                },
-                followed: false,
-                followingMe: false,
-                openId: "223",
-                friendlyName: "Jun Wu",
-                snsName: "wujun4code"
+        const fetchData = async () => {
+            try {
+                const result = await loadData();
+                setData(result);
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            } finally {
+                setLoading(false);
             }
+        };
+
+        if (loading) {
+            fetchData();
         }
-    ];
+    }, [loading, load]);
 
     return (
         <>
-            {samplePosts.map((post) => {
-                return (
-                    <PostCard {...post}>
-                    </PostCard>);
+            {loading ? (
+                <p>Loading...</p>
+            ) : data.map((post) => {
+                return (<PostCard key={post.id} {...post}></PostCard>);
             })}
         </>
     );

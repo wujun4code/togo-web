@@ -1,9 +1,9 @@
-import { ClientContext } from '../contracts/context';
+import { IClientContext } from '../contracts/context';
 import { Location } from '../contracts/qweather/geo';
 
 export class GeoDataSource {
 
-    async searchLocations(context: ClientContext, inputValue: string): Promise<Location[]> {
+    async searchLocations(context: IClientContext, inputValue: string): Promise<Location[]> {
         const GET_LOCATIONS = `
 query SearchLocations($location: String!, $lang: String!) {
   searchLocations(location: $location, lang: $lang) {

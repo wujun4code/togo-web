@@ -1,6 +1,6 @@
 import React, { FC } from "react";
 import { Card, CardHeader, CardBody, CardFooter, Avatar, Button } from "@nextui-org/react";
-
+import { IClientContext } from '../../contracts/context';
 
 export type Author = {
   following:
@@ -22,11 +22,20 @@ export interface PostCardProps {
   content: string;
   postedAt: Date;
   author: Author;
+  id: string;
+  clientContext: IClientContext;
 }
 
-export const PostCard: FC<PostCardProps> = ({ author, content, postedAt }) => {
+export const PostCard: FC<PostCardProps> = ({ author, content, postedAt, clientContext }) => {
 
   const [isFollowed, setIsFollowed] = React.useState(author.followed ? author.followed : false);
+
+  const userInfo = clientContext.user ? clientContext.parseJwt(clientContext.user.accessToken) : "";
+
+  const currentUserOpenId = userInfo ? userInfo.sub : "";
+
+  console.log(`currentUserOpenId:${currentUserOpenId},author.openId:${author.openId}`);
+  const [isHideFollow, setIsHideFollow] = React.useState(currentUserOpenId === author.openId);
 
   function kFormatter(num: number): string {
     return Math.abs(num) > 999
@@ -44,7 +53,8 @@ export const PostCard: FC<PostCardProps> = ({ author, content, postedAt }) => {
             <h5 className="text-small tracking-tight text-default-400">@{author.snsName}</h5>
           </div>
         </div>
-        <Button
+
+        {!isHideFollow && <Button
           className={isFollowed ? "bg-transparent text-foreground border-default-200" : ""}
           color="primary"
           radius="full"
@@ -53,7 +63,7 @@ export const PostCard: FC<PostCardProps> = ({ author, content, postedAt }) => {
           onPress={() => setIsFollowed(!isFollowed)}
         >
           {isFollowed ? "Unfollow" : "Follow"}
-        </Button>
+        </Button>}
       </CardHeader>
       <CardBody className="px-3 py-0 text-small text-default-400">
         <p>

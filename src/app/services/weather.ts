@@ -1,8 +1,8 @@
-import { ClientContext } from '../contracts/context';
+import { IClientContext } from '../contracts/context';
 
 export class WeatherService {
 
-    async getAggregatedData(context: ClientContext, locationId: string) {
+    async getAggregatedData(context: IClientContext, locationId: string) {
 
         const GETBYLOCATIONID = `
 query GetHourlyByLocationId($locationId: String!, $hourly: HourlyForecastType!, $lang: String!, $hourLimit: Int, $daily: DailyForecastType!, $dayLimit: Int) {

@@ -1,3 +1,4 @@
+import { IClientContext } from '../contracts/context';
 export interface OAuth2Config {
     serverUrl: string;
 }
@@ -8,7 +9,7 @@ export class OAuth2DataSource {
         this.serverUrl = config.serverUrl;
     }
 
-    async getToken(authPath: string) {
+    async getToken(context: IClientContext, authPath: string) {
         try {
             const response = await fetch(`${this.serverUrl}/${authPath}`, {
                 method: 'GET',
@@ -29,6 +30,12 @@ export class OAuth2DataSource {
             }
 
             const accessToken = headers.get('X-Auth-Request-Access-Token');
+            if (!accessToken) {
+                throw new Error(`no access token in response.headers`);
+            };
+            context.user = {
+                accessToken: accessToken
+            };
 
             return { idToken, accessToken };
         } catch (error) {

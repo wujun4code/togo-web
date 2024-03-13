@@ -1,15 +1,9 @@
-import type { MetaFunction, LoaderFunctionArgs } from "@remix-run/node";
-import { Autocomplete, AutocompleteItem } from "@nextui-org/react";
-import { NavItems, NavAction } from '../components/nav/header';
-import { Image } from "@nextui-org/react";
-import type { LinksFunction } from "@remix-run/node";
+import { Button, Image, Link, Navbar, NavbarBrand, NavbarContent, NavbarItem } from "@nextui-org/react";
+import type { LinksFunction, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import { City, Now, ClientContext, ClientContextValue, LoaderContext, ServerContextValue, ServerContext } from '../contracts';
-import { Navbar, NavbarBrand, NavbarContent, NavbarItem, Link, Button } from "@nextui-org/react";
-import React from "react";
-import { Textarea } from "@nextui-org/react";
-import { ButtonGroup, Typing, PostCard, TimelineCards } from '../components';
-
+import { ButtonGroup, TimelineCards, Typing } from '../components';
+import { ClientContextValue, LoaderContext, ServerContextValue } from '../contracts';
+import React, { createContext, useContext } from 'react';
 
 export const links: LinksFunction = () => [
   {
@@ -37,7 +31,6 @@ export async function loader({
 
   const serverContext = new ServerContextValue();
   const clientContext = new ClientContextValue(serverContext);
-
   const cookie = request.headers.get("Cookie");
   const url = new URL(request.url);
   const location = url.searchParams.get("location");
@@ -86,7 +79,7 @@ export default function Index() {
         </div>
         <div className="basis-1/2 flex flex-col gap-2">
           <Typing />
-          <TimelineCards />
+          <TimelineCards clientContext={context} />
         </div>
       </main>
     </>
