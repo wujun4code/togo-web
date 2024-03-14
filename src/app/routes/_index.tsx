@@ -1,9 +1,10 @@
 import { Button, Image, Link, Navbar, NavbarBrand, NavbarContent, NavbarItem } from "@nextui-org/react";
 import type { LinksFunction, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import { ButtonGroup, TimelineCards, Typing } from '../components';
-import { ClientContextValue, LoaderContext, ServerContextValue } from '../contracts';
-import React, { createContext, useContext } from 'react';
+import { ButtonGroup, TimelineCards, Typing, NavProfile } from '../components';
+import { ClientContextValue, LoaderContext, ServerContextValue, IClientContext, IUserContext } from '../contracts';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import type { ClientLoaderFunctionArgs } from "@remix-run/react";
 
 export const links: LinksFunction = () => [
   {
@@ -25,6 +26,10 @@ interface IndexLoaderContext extends LoaderContext {
 
 }
 
+interface IndexClientLoaderContext extends IndexLoaderContext {
+  user: IUserContext;
+}
+
 export async function loader({
   request,
 }: LoaderFunctionArgs): Promise<IndexLoaderContext> {
@@ -38,12 +43,67 @@ export async function loader({
   return { server: serverContext };
 }
 
-export default function Index() {
-  const loaderContext = useLoaderData<typeof loader>();
+export const clientLoader = async ({
+  request,
+  params,
+  serverLoader,
+}: ClientLoaderFunctionArgs): Promise<IndexClientLoaderContext> => {
 
-  const { server } = loaderContext;
+  // call the server loader
+  const serverData = await serverLoader();
+  const clientData: IndexClientLoaderContext = serverData as IndexClientLoaderContext;
+  const { server } = clientData;
   const context = new ClientContextValue(server);
 
+  try {
+    const oauth2Token = await context.dataSources.oauth2.getToken(context, 'oauth2/auth');
+
+    if (oauth2Token && oauth2Token.accessToken) {
+
+      const oauth2User = context.services.oauth2.decode(oauth2Token.accessToken);
+      const toGoUser = await context.services.oauth2.fetchToGoUser(context);
+      if (toGoUser) {
+
+        const user = {
+          accessToken: oauth2Token.accessToken,
+          oauth2: oauth2User,
+          togo: toGoUser
+        };
+
+        return {
+          server: server,
+          user: user
+        };
+      }
+    }
+  }
+  catch {
+
+  }
+
+  return clientData;
+};
+
+export default function Index() {
+  const clientData = useLoaderData<typeof clientLoader>();
+  const { server, user } = clientData;
+  const context = new ClientContextValue(server);
+  context.user = user;
+
+  console.log(`context.user:${JSON.stringify(context)}`);
+  const [currentUser, setCurrentUser] = useState<IUserContext | null>(null);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await context.services.oauth2.logIn(context);
+        if (response)
+          setCurrentUser(response);
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+    fetchData();
+  }, []);
   return (
     <>
       <Navbar className="bg-white rounded-lg shadow-lg dark:bg-slate-800 dark:text-slate-400 dark:highlight-white/5" maxWidth="xl">
@@ -59,16 +119,7 @@ export default function Index() {
           <NavbarItem className="flex flex-row items-center justify-between gap-2">
           </NavbarItem>
         </NavbarContent>
-        <NavbarContent justify="end">
-          <NavbarItem className="hidden lg:flex">
-            <Link href="#">Login</Link>
-          </NavbarItem>
-          <NavbarItem>
-            <Button as={Link} color="primary" href="#" variant="flat">
-              Sign Up
-            </Button>
-          </NavbarItem>
-        </NavbarContent>
+        <NavProfile currentUser={currentUser} setCurrentUser={setCurrentUser} />
       </Navbar>
       <main className="relative flex container mx-auto max-w-7xl z-10 px-6 p-4">
         <div className="flex basis-1/4 ">

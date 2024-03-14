@@ -1,6 +1,6 @@
 import { OAuth2DataSource, GraphQLDataSource, GeoDataSource, GraphQLConfig, OAuth2Config } from '../datasources/index';
-import { WeatherService, PostService } from '../services/index';
-import { jwtDecode } from "jwt-decode";
+import { WeatherService, PostService, OAuthUserService, KeycloakUserService } from '../services/index';
+import React, { createContext, useContext, useState } from 'react';
 
 export interface DataSources {
     oauth2: OAuth2DataSource;
@@ -11,6 +11,7 @@ export interface DataSources {
 export interface Services {
     weather: WeatherService;
     post: PostService;
+    oauth2: OAuthUserService;
 }
 
 export interface DataSourceConfig {
@@ -18,17 +19,30 @@ export interface DataSourceConfig {
     oauth2: OAuth2Config;
 }
 
-export interface User {
+export interface OAuthUserProps {
+    sub: string;
+    roles: string[];
+    resource: string;
+}
+
+export interface ToGoUserProps {
+    openId: string;
+    friendlyName: string;
+    snsName: string;
+}
+
+export interface IUserContext {
     accessToken: string;
+    oauth2: OAuthUserProps;
+    togo: ToGoUserProps;
 }
 
 export interface IClientContext {
-    user?: User;
+    user?: IUserContext;
     dataSources: DataSources;
     services: Services;
     node_env: string;
     togo: ToGoEnvironment;
-    parseJwt(token: string): any;
 }
 
 export type ToGoEnvironment = {
@@ -62,7 +76,7 @@ export class ClientContextValue implements IClientContext {
     services: Services;
     node_env: string;
     togo: ToGoEnvironment;
-    user?: User;
+    user?: IUserContext;
     constructor(serverContext: ServerContextValue) {
         this.dataSources = {
             oauth2: new OAuth2DataSource(serverContext.dataSourceConfig.oauth2),
@@ -73,19 +87,16 @@ export class ClientContextValue implements IClientContext {
         this.services = {
             weather: new WeatherService(),
             post: new PostService(),
+            oauth2: new KeycloakUserService({ resource: "express-middleware" })
         };
 
         this.node_env = serverContext.node_env;
         this.togo = serverContext.togo;
         if (this.node_env === 'development') {
-            this.user = {
-                accessToken: this.togo.devToken,
-            };
+            // this.user = {
+            //     accessToken: this.togo.devToken,
+            // };
         }
-    }
-
-    parseJwt(token: string) {
-        return jwtDecode(token);
     }
 }
 

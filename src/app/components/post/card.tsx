@@ -30,11 +30,10 @@ export const PostCard: FC<PostCardProps> = ({ author, content, postedAt, clientC
 
   const [isFollowed, setIsFollowed] = React.useState(author.followed ? author.followed : false);
 
-  const userInfo = clientContext.user ? clientContext.parseJwt(clientContext.user.accessToken) : "";
+  const userInfo = "";
 
-  const currentUserOpenId = userInfo ? userInfo.sub : "";
+  const currentUserOpenId = "";
 
-  console.log(`currentUserOpenId:${currentUserOpenId},author.openId:${author.openId}`);
   const [isHideFollow, setIsHideFollow] = React.useState(currentUserOpenId === author.openId);
 
   function kFormatter(num: number): string {

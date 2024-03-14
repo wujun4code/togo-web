@@ -41,9 +41,7 @@ export class GraphQLDataSource {
                     variables: variables ? variables : undefined,
                 }),
             });
-
             const { data } = await response.json();
-
             return data;
         } else {
             const response = await fetch(this.serverUrl, {

@@ -20,11 +20,39 @@ export const TimelineCards: FC<TimelineProps> = ({ load, clientContext }) => {
     const [loading, setLoading] = useState<boolean>(true);
 
     const loadData = async () => {
-        const currentData = load ? await load() : await defaultLoad();
-        return currentData;
+        if (load) return await load();
+        if (clientContext.user) return loadTimeline();
+        return await loadTrendingFeed();
     };
 
-    const defaultLoad = async (): Promise<PostCardProps[]> => {
+    const loadTrendingFeed = async (): Promise<PostCardProps[]> => {
+
+        const source = await clientContext.services.post.getTrendingFeed(clientContext);
+
+        return source.map((p) => {
+            return {
+                id: p.id,
+                content: p.content,
+                postedAt: new Date(p.postedAt),
+                author: {
+                    following: {
+                        totalCount: p.authorInfo.following.totalCount,
+                    },
+                    follower: {
+                        totalCount: p.authorInfo.follower.totalCount,
+                    },
+                    followed: false,
+                    followingMe: false,
+                    openId: p.authorInfo.openId,
+                    snsName: p.authorInfo.snsName,
+                    friendlyName: p.authorInfo.friendlyName,
+                },
+                clientContext: clientContext
+            };
+        });
+    }
+
+    const loadTimeline = async (): Promise<PostCardProps[]> => {
 
         const source = await clientContext.services.post.getTimeline(clientContext);
 
