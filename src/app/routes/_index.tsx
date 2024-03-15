@@ -5,6 +5,8 @@ import { ButtonGroup, TimelineCards, Typing, NavProfile } from '../components';
 import { ClientContextValue, LoaderContext, ServerContextValue, IClientContext, IUserContext } from '../contracts';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ClientLoaderFunctionArgs } from "@remix-run/react";
+import { useUserState, UserProvider } from '../hooks/user';
+import { getAuth, loadUser } from '../services/.server/user';
 
 export const links: LinksFunction = () => [
   {
@@ -30,15 +32,16 @@ interface IndexClientLoaderContext extends IndexLoaderContext {
   user: IUserContext;
 }
 
-export async function loader({
-  request,
-}: LoaderFunctionArgs): Promise<IndexLoaderContext> {
+export async function loader(args: LoaderFunctionArgs): Promise<IndexLoaderContext> {
+  const { request } = args;
 
   const serverContext = new ServerContextValue();
   const clientContext = new ClientContextValue(serverContext);
   const cookie = request.headers.get("Cookie");
   const url = new URL(request.url);
   const location = url.searchParams.get("location");
+
+  await loadUser(args, serverContext);
 
   return { server: serverContext };
 }
@@ -85,24 +88,41 @@ export const clientLoader = async ({
 };
 
 export default function Index() {
+  const serverData = useLoaderData<typeof loader>();
+
+  console.log(`serverData.user:${JSON.stringify(serverData.server.user)}`);
+
   const clientData = useLoaderData<typeof clientLoader>();
   const { server, user } = clientData;
-  const context = new ClientContextValue(server);
-  context.user = user;
 
-  console.log(`context.user:${JSON.stringify(context)}`);
-  const [currentUser, setCurrentUser] = useState<IUserContext | null>(null);
+  console.log(`clientData.user:${JSON.stringify(user)}`);
+
+  const context = new ClientContextValue(server);
+
+  if (serverData.server.user) {
+    context.user = serverData.server.user;
+  }
+  if (user) {
+    context.user = user;
+  }
+
+  const { currentUserX, setCurrentUserX } = useUserState();
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await context.services.oauth2.logIn(context);
-        if (response)
-          setCurrentUser(response);
+        if (response) {
+          //setCurrentUser(response);
+          setCurrentUserX(response);
+        }
+
       } catch (error) {
         console.error('Error fetching user data:', error);
       }
     };
-    fetchData();
+    if (context.user) setCurrentUserX(context.user);
+    //fetchData();
   }, []);
   return (
     <>
@@ -119,14 +139,15 @@ export default function Index() {
           <NavbarItem className="flex flex-row items-center justify-between gap-2">
           </NavbarItem>
         </NavbarContent>
-        <NavProfile currentUser={currentUser} setCurrentUser={setCurrentUser} />
+        <NavProfile />
       </Navbar>
       <main className="relative flex container mx-auto max-w-7xl z-10 px-6 p-4">
         <div className="flex basis-1/4 ">
           <ButtonGroup className="flex flex-col gap-4" buttons={
             [
               { id: 1, label: 'Home', startIcon: 'home' },
-            ]} ></ButtonGroup>
+            ]} >
+          </ButtonGroup>
         </div>
         <div className="basis-1/2 flex flex-col gap-2">
           <Typing />

@@ -49,16 +49,24 @@ export type ToGoEnvironment = {
     devToken: string;
 }
 
-export interface ServerContext {
-    dataSourceConfig: DataSourceConfig;
-    node_env: string;
-    togo: ToGoEnvironment;
+export interface IServerServices {
+    oauth2: OAuthUserService;
 }
 
-export class ServerContextValue implements ServerContext {
+export interface IServerContext {
     dataSourceConfig: DataSourceConfig;
+    user?: IUserContext;
     node_env: string;
     togo: ToGoEnvironment;
+    services: IServerServices;
+}
+
+export class ServerContextValue implements IServerContext {
+    dataSourceConfig: DataSourceConfig;
+    user?: IUserContext;
+    node_env: string;
+    togo: ToGoEnvironment;
+    services: IServerServices;
     constructor() {
         this.dataSourceConfig = {
             oauth2: { serverUrl: process.env.OAUTH2_SERVER ? process.env.OAUTH2_SERVER : "" },
@@ -67,6 +75,9 @@ export class ServerContextValue implements ServerContext {
         this.node_env = process.env.NODE_ENV;
         this.togo = {
             devToken: process.env.devToken ? process.env.devToken : "",
+        };
+        this.services = {
+            oauth2: new KeycloakUserService({ resource: "express-middleware" }),
         };
     }
 }
@@ -101,5 +112,5 @@ export class ClientContextValue implements IClientContext {
 }
 
 export interface LoaderContext {
-    server: ServerContext;
+    server: IServerContext;
 }

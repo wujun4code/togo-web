@@ -3,7 +3,7 @@ import { Textarea } from "@nextui-org/react";
 import { Button } from "@nextui-org/react";
 import { PostCard, PostCardProps } from './card';
 import { IClientContext } from '../../contracts/context';
-
+import { useCharactersContext, useUserState } from "../../hooks/user";
 interface TimelineProps {
     clientContext: IClientContext;
     load?: () => Promise<PostCardProps[]>;
@@ -18,10 +18,12 @@ export const TimelineCards: FC<TimelineProps> = ({ load, clientContext }) => {
 
     const [data, setData] = useState<PostCardProps[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
+    const { currentUserX, setCurrentUserX } = useUserState();
 
     const loadData = async () => {
+        console.log(`currentUserX:${JSON.stringify(currentUserX)}`);
         if (load) return await load();
-        if (clientContext.user) return loadTimeline();
+        if (currentUserX && currentUserX.togo.openId !== "") return await loadTimeline();
         return await loadTrendingFeed();
     };
 
@@ -94,7 +96,7 @@ export const TimelineCards: FC<TimelineProps> = ({ load, clientContext }) => {
         if (loading) {
             fetchData();
         }
-    }, [loading, load]);
+    }, [loading, load, currentUserX]);
 
     return (
         <>
