@@ -1,43 +1,43 @@
-import React, { FC, createContext, useContext, useState } from 'react';
+import React, { FC, createContext, useContext, useState, useEffect } from 'react';
 import { User, Button, Image, Link, Navbar, NavbarBrand, NavbarContent, NavbarItem } from "@nextui-org/react";
 import { ClientContextValue, LoaderContext, ServerContextValue, IClientContext, IUserContext } from '../../contracts';
 import { useCharactersContext, useUserState } from "../../hooks/user";
+import { Card, Skeleton } from "@nextui-org/react";
 
 export const NavProfile: FC = () => {
 
-    const {
-        characterId,
-        setCharacterId
-    } = useCharactersContext();
-    const { currentUserX, setCurrentUserX } = useUserState();
+    const { currentUser: currentUserX, setCurrentUser: setCurrentUserX } = useUserState();
 
-    return currentUserX && currentUserX.accessToken ? (
+    const [isLoaded, setIsLoaded] = React.useState(false);
+
+    useEffect(() => {
+        if (currentUserX && currentUserX.accessToken) {
+            setIsLoaded(true);
+        }
+    }, [currentUserX]);
+
+    return (
         <>
-            <User
-                name={`${currentUserX.togo.friendlyName}+${characterId}`}
-                avatarProps={{
-                    src: "https://avatars.githubusercontent.com/u/30373425?v=4"
-                }}
-            />
+            <Skeleton isLoaded={isLoaded} className="rounded-lg">
+                {currentUserX && currentUserX.accessToken ? <User
+                    name={`${currentUserX.togo.friendlyName}`}
+                    avatarProps={{
+                        src: "https://avatars.githubusercontent.com/u/30373425?v=4"
+                    }}
+                /> : (<NavLogInOrSignUp />)}
+            </Skeleton>
         </>
-    ) :
-        (<NavLogInOrSignUp>
-
-        </NavLogInOrSignUp>);
+    );
 }
 
 export const NavLogInOrSignUp: FC = ({ }) => {
-    const {
-        characterId,
-        setCharacterId
-    } = useCharactersContext();
 
     return (<NavbarContent justify="end">
         <NavbarItem className="hidden lg:flex">
             <Link href="#">Login</Link>
         </NavbarItem>
         <NavbarItem>
-            <Button onClick={() => setCharacterId(characterId - 1)} as={Link} color="primary" href="#" variant="flat">
+            <Button onClick={() => { }} as={Link} color="primary" href="#" variant="flat">
                 Sign Up
             </Button>
         </NavbarItem>

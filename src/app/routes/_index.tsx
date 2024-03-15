@@ -5,7 +5,7 @@ import { ButtonGroup, TimelineCards, Typing, NavProfile } from '../components';
 import { ClientContextValue, LoaderContext, ServerContextValue, IClientContext, IUserContext } from '../contracts';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ClientLoaderFunctionArgs } from "@remix-run/react";
-import { useUserState, UserProvider } from '../hooks/user';
+import { useUserState, UserProvider, useDataSource, LoadingState } from '../hooks/index';
 import { getAuth, loadUser } from '../services/.server/user';
 
 export const links: LinksFunction = () => [
@@ -90,12 +90,12 @@ export const clientLoader = async ({
 export default function Index() {
   const serverData = useLoaderData<typeof loader>();
 
-  console.log(`serverData.user:${JSON.stringify(serverData.server.user)}`);
+  // console.log(`serverData.user:${JSON.stringify(serverData.server.user)}`);
 
   const clientData = useLoaderData<typeof clientLoader>();
   const { server, user } = clientData;
 
-  console.log(`clientData.user:${JSON.stringify(user)}`);
+  // console.log(`clientData.user:${JSON.stringify(user)}`);
 
   const context = new ClientContextValue(server);
 
@@ -106,7 +106,9 @@ export default function Index() {
     context.user = user;
   }
 
-  const { currentUserX, setCurrentUserX } = useUserState();
+  const { currentUser, setCurrentUser, loadingState, setLoadingState } = useUserState();
+
+  const { setDataSourceConfig } = useDataSource();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -114,14 +116,23 @@ export default function Index() {
         const response = await context.services.oauth2.logIn(context);
         if (response) {
           //setCurrentUser(response);
-          setCurrentUserX(response);
+          setCurrentUser(response);
+          setLoadingState(LoadingState.Loaded);
         }
 
       } catch (error) {
         console.error('Error fetching user data:', error);
       }
     };
-    if (context.user) setCurrentUserX(context.user);
+    if (context.user) 
+    {
+      setCurrentUser(context.user);
+      setLoadingState(LoadingState.Loaded);
+    }
+    if (server.dataSourceConfig) {
+      //console.log(`server.dataSourceConfig:${JSON.stringify(server.dataSourceConfig)}`);
+      setDataSourceConfig(server.dataSourceConfig);
+    }
     //fetchData();
   }, []);
   return (
@@ -151,7 +162,7 @@ export default function Index() {
         </div>
         <div className="basis-1/2 flex flex-col gap-2">
           <Typing />
-          <TimelineCards clientContext={context} />
+          <TimelineCards/>
         </div>
       </main>
     </>

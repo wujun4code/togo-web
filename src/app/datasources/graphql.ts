@@ -10,6 +10,23 @@ export class GraphQLDataSource {
         this.serverUrl = config.serverUrl;
     }
 
+    async execute(serverUrl: string, gql: string, variables?: any, headers?: any) {
+        const response = await fetch(serverUrl, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: headers ? {
+                ...headers,
+                "Content-Type": "application/json",
+            } : { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                query: gql,
+                variables: variables ? variables : undefined,
+            }),
+        });
+        const { data } = await response.json();
+        return data;
+    }
+
     async query(context: IClientContext, query: string, variables?: any) {
         let accessToken = '';
         let idToken = '';

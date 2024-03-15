@@ -10,9 +10,17 @@ import React, {
 
 import { IUserContext } from '../contracts/context';
 
+export enum LoadingState {
+    Init = 'init',
+    Loading = 'loading',
+    Loaded = 'loaded',
+}
+
 type UserContextType = {
-    currentUserX: IUserContext;
-    setCurrentUserX: React.Dispatch<React.SetStateAction<IUserContext>>;
+    currentUser: IUserContext;
+    setCurrentUser: React.Dispatch<React.SetStateAction<IUserContext>>;
+    loadingState: LoadingState;
+    setLoadingState: React.Dispatch<React.SetStateAction<LoadingState>>;
 }
 
 export const UserContext = createContext<UserContextType>({} as UserContextType);
@@ -24,7 +32,7 @@ interface Props {
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
     // 初始化用户状态
-    const [currentUserX, setCurrentUserX] = useState<IUserContext>({
+    const [currentUser, setCurrentUser] = useState<IUserContext>({
         accessToken: '',
         oauth2: {
             sub: '',
@@ -35,11 +43,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             openId: '',
             friendlyName: '',
             snsName: '',
-        }
+        },
     });
 
+    const [loadingState, setLoadingState] = useState<LoadingState>(LoadingState.Init);
+
     return (
-        <UserContext.Provider value={{ currentUserX, setCurrentUserX }}>
+        <UserContext.Provider value={{ currentUser, setCurrentUser, loadingState, setLoadingState }}>
             {children}
         </UserContext.Provider>
     );

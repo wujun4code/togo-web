@@ -1,6 +1,40 @@
 import React, { FC } from "react";
-import { Card, CardHeader, CardBody, CardFooter, Avatar, Button } from "@nextui-org/react";
+import { Card, CardHeader, CardBody, CardFooter, Avatar, Button, Skeleton } from "@nextui-org/react";
 import { IClientContext } from '../../contracts/context';
+import { useCharactersContext, useUserState, useDataSource, LoadingState } from "../../hooks";
+
+
+export const TestSkeleton = () => {
+  const [isLoaded, setIsLoaded] = React.useState(false);
+
+  const toggleLoad = () => {
+    setIsLoaded(!isLoaded);
+  };
+
+  return (
+    <div className="flex flex-col gap-3">
+      <Card className="w-[200px] space-y-5 p-4" radius="lg">
+        <Skeleton isLoaded={isLoaded} className="rounded-lg">
+          <div className="h-24 rounded-lg bg-secondary"></div>
+        </Skeleton>
+        <div className="space-y-3">
+          <Skeleton isLoaded={isLoaded} className="w-3/5 rounded-lg">
+            <div className="h-3 w-full rounded-lg bg-secondary"></div>
+          </Skeleton>
+          <Skeleton isLoaded={isLoaded} className="w-4/5 rounded-lg">
+            <div className="h-3 w-full rounded-lg bg-secondary-300"></div>
+          </Skeleton>
+          <Skeleton isLoaded={isLoaded} className="w-2/5 rounded-lg">
+            <div className="h-3 w-full rounded-lg bg-secondary-200"></div>
+          </Skeleton>
+        </div>
+      </Card>
+      <Button size="sm" variant="flat" color="secondary" onPress={toggleLoad}>
+        {isLoaded ? "Show" : "Hide"} Skeleton
+      </Button>
+    </div>
+  );
+}
 
 export type Author = {
   following:
@@ -23,16 +57,13 @@ export interface PostCardProps {
   postedAt: Date;
   author: Author;
   id: string;
-  clientContext: IClientContext;
 }
 
-export const PostCard: FC<PostCardProps> = ({ author, content, postedAt, clientContext }) => {
+export const PostCard: FC<PostCardProps> = ({ author, content, postedAt }) => {
 
   const [isFollowed, setIsFollowed] = React.useState(author.followed ? author.followed : false);
-
-  const userInfo = "";
-
-  const currentUserOpenId = "";
+  const { currentUser, setCurrentUser, loadingState, setLoadingState } = useUserState();
+  const currentUserOpenId = currentUser.togo.openId;
 
   const [isHideFollow, setIsHideFollow] = React.useState(currentUserOpenId === author.openId);
 
@@ -42,11 +73,15 @@ export const PostCard: FC<PostCardProps> = ({ author, content, postedAt, clientC
       : `${Math.sign(num) * Math.abs(num)}`;
   }
 
+  //return (<TestSkeleton />)
+
   return (
     <Card className="">
       <CardHeader className="justify-between">
         <div className="flex gap-5">
-          <Avatar isBordered radius="full" size="md" name={author.friendlyName} />
+          <Skeleton isLoaded={loadingState === LoadingState.Loaded} className="rounded-full">
+            <Avatar isBordered radius="full" size="md" name={author.friendlyName} />
+          </Skeleton>
           <div className="flex flex-col gap-1 items-start justify-center">
             <h4 className="text-small font-semibold leading-none text-default-600">{author.friendlyName}</h4>
             <h5 className="text-small tracking-tight text-default-400">@{author.snsName}</h5>

@@ -2,13 +2,13 @@ import { OAuth2DataSource, GraphQLDataSource, GeoDataSource, GraphQLConfig, OAut
 import { WeatherService, PostService, OAuthUserService, KeycloakUserService } from '../services/index';
 import React, { createContext, useContext, useState } from 'react';
 
-export interface DataSources {
+export interface IDataSources {
     oauth2: OAuth2DataSource;
     graphql: GraphQLDataSource;
     geo: GeoDataSource;
 }
 
-export interface Services {
+export interface IServices {
     weather: WeatherService;
     post: PostService;
     oauth2: OAuthUserService;
@@ -39,8 +39,8 @@ export interface IUserContext {
 
 export interface IClientContext {
     user?: IUserContext;
-    dataSources: DataSources;
-    services: Services;
+    dataSources: IDataSources;
+    services: IServices;
     node_env: string;
     togo: ToGoEnvironment;
 }
@@ -83,8 +83,8 @@ export class ServerContextValue implements IServerContext {
 }
 
 export class ClientContextValue implements IClientContext {
-    dataSources: DataSources;
-    services: Services;
+    dataSources: IDataSources;
+    services: IServices;
     node_env: string;
     togo: ToGoEnvironment;
     user?: IUserContext;

@@ -3,9 +3,83 @@ import { Textarea } from "@nextui-org/react";
 import { Button } from "@nextui-org/react";
 import { PostCard, PostCardProps } from './card';
 import { IClientContext } from '../../contracts/context';
-import { useCharactersContext, useUserState } from "../../hooks/user";
+import { useCharactersContext, useUserState, useDataSource, useAsyncLoader, AsyncLoaderState, useGraphQL, useChatRoom } from "../../hooks";
+
+const GET_TIMELINE = `
+        query Timeline($input: BaseQueryInput) {
+          timeline(input: $input) {
+            authorInfo {
+              openId
+              snsName
+              friendlyName
+              following {
+                totalCount
+              }
+              follower {
+                totalCount
+              }
+              followRelation {
+                followed
+                followingMe
+              }
+            }
+            content
+            id
+            postedAt
+          }
+        }`;
+const GET_TRENDING_FEED = `
+        query TrendingFeed {
+          trendingFeed {
+            authorInfo {
+              follower {
+                totalCount
+              }
+              following {
+                totalCount
+              }
+              friendlyName
+              openId
+              snsName
+            }
+            content
+            id
+            postedAt
+          }
+        }`;
+const variables = {
+    "input": {
+        "filters": {},
+        "limit": 10,
+        "skip": 0,
+        "sorter": {}
+    }
+};
+
+interface AuthorInfo {
+    openId: string;
+    snsName: string;
+    friendlyName: string;
+    following: {
+        totalCount: number;
+    };
+    follower: {
+        totalCount: number;
+    };
+    followRelation: {
+        followed: boolean;
+        followingMe: boolean;
+    };
+}
+
+export interface Post {
+    authorInfo: AuthorInfo;
+    content: string;
+    id: string;
+    postedAt: string; // Consider using a Date type if needed
+}
+
 interface TimelineProps {
-    clientContext: IClientContext;
     load?: () => Promise<PostCardProps[]>;
 }
 
@@ -14,95 +88,145 @@ export interface TimelineState {
     data: PostCardProps[];
 }
 
-export const TimelineCards: FC<TimelineProps> = ({ load, clientContext }) => {
+export const TimelineCards: FC<TimelineProps> = ({ load }) => {
 
-    const [data, setData] = useState<PostCardProps[]>([]);
-    const [loading, setLoading] = useState<boolean>(true);
-    const { currentUserX, setCurrentUserX } = useUserState();
+    //const { currentUser, setCurrentUser } = useUserState();
 
-    const loadData = async () => {
-        console.log(`currentUserX:${JSON.stringify(currentUserX)}`);
-        if (load) return await load();
-        if (currentUserX && currentUserX.togo.openId !== "") return await loadTimeline();
-        return await loadTrendingFeed();
-    };
+    const { dataSourceConfig } = useDataSource();
 
-    const loadTrendingFeed = async (): Promise<PostCardProps[]> => {
+    // const loadTrendingFeed = async (): Promise<PostCardProps[]> => {
 
-        const source = await clientContext.services.post.getTrendingFeed(clientContext);
+    //     const { trendingFeed }: { trendingFeed: Post[] } = await dataSource.graphql.execute(dataSourceConfig.graphql.serverUrl, GET_TRENDING_FEED, null, {
+    //         'x-forwarded-access-token': currentUser.accessToken ? `${currentUser.accessToken}` : "",
+    //     });
 
-        return source.map((p) => {
-            return {
-                id: p.id,
-                content: p.content,
-                postedAt: new Date(p.postedAt),
-                author: {
-                    following: {
-                        totalCount: p.authorInfo.following.totalCount,
-                    },
-                    follower: {
-                        totalCount: p.authorInfo.follower.totalCount,
-                    },
-                    followed: false,
-                    followingMe: false,
-                    openId: p.authorInfo.openId,
-                    snsName: p.authorInfo.snsName,
-                    friendlyName: p.authorInfo.friendlyName,
-                },
-                clientContext: clientContext
-            };
-        });
+    //     return trendingFeed.map((p) => {
+    //         return {
+    //             id: p.id,
+    //             content: p.content,
+    //             postedAt: new Date(p.postedAt),
+    //             author: {
+    //                 following: {
+    //                     totalCount: p.authorInfo.following.totalCount,
+    //                 },
+    //                 follower: {
+    //                     totalCount: p.authorInfo.follower.totalCount,
+    //                 },
+    //                 followed: false,
+    //                 followingMe: false,
+    //                 openId: p.authorInfo.openId,
+    //                 snsName: p.authorInfo.snsName,
+    //                 friendlyName: p.authorInfo.friendlyName,
+    //             },
+    //         };
+    //     });
+    // }
+
+    // const loadTimeline = async (): Promise<PostCardProps[]> => {
+
+    //     const { timeline }: { timeline: Post[] } = await dataSource.graphql.execute(dataSourceConfig.graphql.serverUrl, GET_TIMELINE, variables, {
+    //         'x-forwarded-access-token': currentUser.accessToken ? `${currentUser.accessToken}` : "",
+    //     });
+
+    //     return timeline.map((p) => {
+    //         return {
+    //             id: p.id,
+    //             content: p.content,
+    //             postedAt: new Date(p.postedAt),
+    //             author: {
+    //                 following: {
+    //                     totalCount: p.authorInfo.following.totalCount,
+    //                 },
+    //                 follower: {
+    //                     totalCount: p.authorInfo.follower.totalCount,
+    //                 },
+    //                 followed: p.authorInfo.followRelation.followed,
+    //                 followingMe: p.authorInfo.followRelation.followingMe,
+    //                 openId: p.authorInfo.openId,
+    //                 snsName: p.authorInfo.snsName,
+    //                 friendlyName: p.authorInfo.friendlyName,
+    //             },
+    //         };
+    //     });
+    // };
+
+    // const loadData = async () => {
+    //     if (load) return await load();
+    //     if (currentUser && currentUser.togo.openId !== "") {
+
+    //         return await loadTimeline();
+    //     }
+    //     if (dataSourceConfig.graphql.serverUrl) {
+
+    //         return await loadTrendingFeed();
+    //     }
+
+    //     return [];
+    // };
+
+    //const { loadingState, data: asyncData } = useAsyncLoader<PostCardProps[]>(loadData);
+
+
+    // console.log(`cards:dataSourceConfig:${JSON.stringify(dataSourceConfig)}`);
+    // if (!dataSourceConfig?.graphql?.serverUrl) {
+    //     console.log(`return loading....`);
+    //     return <div>Loading...</div>;
+    // }
+
+    //const [posts, setPosts] = useState<PostCardProps[]>([]);
+    const posts: PostCardProps[] = [];
+
+    const [serverUrl, setServerUrl] = useState('http://localhost:4000');
+    const [roomId, setRoomId] = useState('general');
+
+    // if (!dataSourceConfig?.graphql?.serverUrl) {
+    //     return <div>Loading...</div>;
+    // }
+
+    const { data, hookState } = useGraphQL({
+        serverUrl: serverUrl,
+        gql: GET_TRENDING_FEED,
+        queryName: 'trendingFeed',
+        variables: variables,
+        headers: { 'x-forwarded-access-token': "accessToken" ? `` : "" }
+    });
+
+    if (hookState !== AsyncLoaderState.Loaded) {
+        return <div>Loading...</div>;
     }
 
-    const loadTimeline = async (): Promise<PostCardProps[]> => {
+    if (Object.keys(data).length === 0) {
+        return <div>Starting...</div>;
+    }
 
-        const source = await clientContext.services.post.getTimeline(clientContext);
 
-        return source.map((p) => {
-            return {
-                id: p.id,
-                content: p.content,
-                postedAt: new Date(p.postedAt),
-                author: {
-                    following: {
-                        totalCount: p.authorInfo.following.totalCount,
-                    },
-                    follower: {
-                        totalCount: p.authorInfo.follower.totalCount,
-                    },
-                    followed: p.authorInfo.followRelation.followed,
-                    followingMe: p.authorInfo.followRelation.followingMe,
-                    openId: p.authorInfo.openId,
-                    snsName: p.authorInfo.snsName,
-                    friendlyName: p.authorInfo.friendlyName,
+    const trendingFeed = data as Post[];
+    const list = trendingFeed.map((p) => {
+        return {
+            id: p.id,
+            content: p.content,
+            postedAt: new Date(p.postedAt),
+            author: {
+                following: {
+                    totalCount: p.authorInfo.following.totalCount,
                 },
-                clientContext: clientContext
-            };
-        });
-    };
-
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const result = await loadData();
-                setData(result);
-            } catch (error) {
-                console.error('Error fetching data:', error);
-            } finally {
-                setLoading(false);
-            }
+                follower: {
+                    totalCount: p.authorInfo.follower.totalCount,
+                },
+                followed: false,
+                followingMe: false,
+                openId: p.authorInfo.openId,
+                snsName: p.authorInfo.snsName,
+                friendlyName: p.authorInfo.friendlyName,
+            },
         };
-
-        if (loading) {
-            fetchData();
-        }
-    }, [loading, load, currentUserX]);
+    });
 
     return (
         <>
-            {loading ? (
+            {!list ? (
                 <p>Loading...</p>
-            ) : data.map((post) => {
+            ) : list.map((post) => {
                 return (<PostCard key={post.id} {...post}></PostCard>);
             })}
         </>
