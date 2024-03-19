@@ -1,7 +1,7 @@
-import React, { FC } from "react";
-import { Card, CardHeader, CardBody, CardFooter, Avatar, Button, Skeleton } from "@nextui-org/react";
-import { IClientContext } from '../../contracts/context';
-import { useCharactersContext, useUserState, useDataSource, LoadingState } from "../../hooks";
+import { Avatar, Button, Card, CardBody, CardFooter, CardHeader, Skeleton } from "@nextui-org/react";
+import React, { FC, useState } from "react";
+import { IUserContext } from '../../contracts/context';
+import { LoadingState, useUserState } from "../../hooks";
 
 
 export const TestSkeleton = () => {
@@ -57,13 +57,15 @@ export interface PostCardProps {
   postedAt: Date;
   author: Author;
   id: string;
+  currentUser?: IUserContext
 }
 
-export const PostCard: FC<PostCardProps> = ({ author, content, postedAt }) => {
+export const PostCard: FC<PostCardProps> = ({ author, content, postedAt, currentUser: initialCurrentUser }) => {
 
   const [isFollowed, setIsFollowed] = React.useState(author.followed ? author.followed : false);
+  const [user, setUser] = useState(initialCurrentUser);
   const { currentUser, setCurrentUser, loadingState, setLoadingState } = useUserState();
-  const currentUserOpenId = currentUser.togo.openId;
+  const currentUserOpenId = user?.togo?.openId;
 
   const [isHideFollow, setIsHideFollow] = React.useState(currentUserOpenId === author.openId);
 

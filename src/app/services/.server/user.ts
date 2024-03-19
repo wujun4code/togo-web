@@ -78,12 +78,14 @@ export const loadUser = async (args: LoaderFunctionArgs, serverContext: IServerC
         throw new Error(`unexpected errors.error message is ${data?.errors?.[0]?.message}`)
     }
 
-    const { openId, snsName, friendlyName } = data.myProfile;
+    const { openId, snsName, friendlyName, following, follower } = data.myProfile;
 
     const userProps = {
         openId: openId,
         snsName: snsName,
         friendlyName: friendlyName,
+        following: following,
+        follower: follower,
     };
 
     serverContext.user = {

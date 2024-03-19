@@ -6,7 +6,7 @@ import { ClientContextValue, LoaderContext, ServerContextValue, IClientContext, 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ClientLoaderFunctionArgs } from "@remix-run/react";
 import { useUserState, UserProvider, useDataSource, LoadingState } from '../hooks/index';
-import { getAuth, loadUser } from '../services/.server/user';
+import { getAuth, loadUser, getTrendingFeed, getTimeline } from '../services/.server';
 
 export const links: LinksFunction = () => [
   {
@@ -25,7 +25,7 @@ export const meta: MetaFunction = () => {
 };
 
 interface IndexLoaderContext extends LoaderContext {
-
+  posts: any;
 }
 
 interface IndexClientLoaderContext extends IndexLoaderContext {
@@ -43,7 +43,9 @@ export async function loader(args: LoaderFunctionArgs): Promise<IndexLoaderConte
 
   await loadUser(args, serverContext);
 
-  return { server: serverContext };
+  const trendingFeed = serverContext.user ? await getTimeline(args, serverContext) : await getTrendingFeed(args, serverContext);
+
+  return { server: serverContext, posts: trendingFeed };
 }
 
 export const clientLoader = async ({
@@ -75,7 +77,8 @@ export const clientLoader = async ({
 
         return {
           server: server,
-          user: user
+          user: user,
+          posts: clientData.posts
         };
       }
     }
@@ -93,6 +96,7 @@ export default function Index() {
   // console.log(`serverData.user:${JSON.stringify(serverData.server.user)}`);
 
   const clientData = useLoaderData<typeof clientLoader>();
+
   const { server, user } = clientData;
 
   // console.log(`clientData.user:${JSON.stringify(user)}`);
@@ -108,7 +112,7 @@ export default function Index() {
 
   const { currentUser, setCurrentUser, loadingState, setLoadingState } = useUserState();
 
-  const { setDataSourceConfig } = useDataSource();
+  const { dataSourceConfig, setDataSourceConfig } = useDataSource();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -124,13 +128,11 @@ export default function Index() {
         console.error('Error fetching user data:', error);
       }
     };
-    if (context.user) 
-    {
+    if (context.user) {
       setCurrentUser(context.user);
       setLoadingState(LoadingState.Loaded);
     }
     if (server.dataSourceConfig) {
-      //console.log(`server.dataSourceConfig:${JSON.stringify(server.dataSourceConfig)}`);
       setDataSourceConfig(server.dataSourceConfig);
     }
     //fetchData();
@@ -161,8 +163,10 @@ export default function Index() {
           </ButtonGroup>
         </div>
         <div className="basis-1/2 flex flex-col gap-2">
-          <Typing />
-          <TimelineCards/>
+          <Typing currentUser={context.user} />
+          <TimelineCards serverUrlX={serverData.server.dataSourceConfig.graphql.serverUrl}
+            data={serverData.posts}
+            currentUser={context.user} />
         </div>
       </main>
     </>

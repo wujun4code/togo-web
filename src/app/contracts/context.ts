@@ -29,6 +29,12 @@ export interface ToGoUserProps {
     openId: string;
     friendlyName: string;
     snsName: string;
+    following?: any;
+    follower?: any;
+}
+
+export const getGqlHeaders = (user?: IUserContext) => {
+    return user ? { 'x-forwarded-access-token': user.accessToken } : {}
 }
 
 export interface IUserContext {

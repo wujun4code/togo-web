@@ -43,6 +43,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             openId: '',
             friendlyName: '',
             snsName: '',
+            follower:{},
+            following:{},
         },
     });
 

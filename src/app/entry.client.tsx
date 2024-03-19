@@ -7,17 +7,21 @@
 import { RemixBrowser } from "@remix-run/react";
 import { startTransition, StrictMode } from "react";
 import { hydrateRoot } from "react-dom/client";
-import { UserProvider, DataSourceProvider, CharactersContext, AsyncLoaderProvider } from './hooks';
+import { UserProvider, DataSourceProvider, CharactersContext, AsyncLoaderProvider, TopicProvider } from './hooks';
 
 startTransition(() => {
   hydrateRoot(
     document,
     <StrictMode>
-      <DataSourceProvider>
-        <UserProvider>
-          <RemixBrowser />
-        </UserProvider>
-      </DataSourceProvider>
+      <TopicProvider>
+        <DataSourceProvider>
+          <UserProvider>
+            <CharactersContext>
+              <RemixBrowser />
+            </CharactersContext>
+          </UserProvider>
+        </DataSourceProvider>
+      </TopicProvider>
     </StrictMode>
   );
 });
