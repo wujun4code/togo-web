@@ -162,7 +162,7 @@ export default function Index() {
             ]} >
           </ButtonGroup>
         </div>
-        <div className="basis-1/2 flex flex-col gap-2">
+        <div className="basis-1/2 flex flex-col gap-2 max-w-2xl">
           <Typing currentUser={context.user} />
           <TimelineCards serverUrlX={serverData.server.dataSourceConfig.graphql.serverUrl}
             data={serverData.posts}

@@ -102,7 +102,7 @@ export const PostCard: FC<PostCardProps> = ({ author, content, postedAt, current
         </Button>}
       </CardHeader>
       <CardBody className="px-3 py-0 text-small text-default-400">
-        <p>
+        <p className="line-clamp-3 ...">
           {content}
         </p>
       </CardBody>
