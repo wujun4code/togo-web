@@ -97,7 +97,7 @@ export const TimelineCards: FC<TimelineProps> = ({ load, serverUrlX, data, curre
             {cards.map((post) => {
               return (
                 <motion.div key={post.id}
-                  initial={{ x: -200, opacity: 0 }}
+                  initial={{ x: -250, opacity: 0 }}
                   animate={{ x: 0.2, opacity: 1 }}
                   transition={{ duration: 0.1 }}
                   exit={{ opacity: 0 }}>

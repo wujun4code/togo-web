@@ -9,7 +9,6 @@ export const GET_TRENDING_FEED = `
                 totalCount
               }
               friendlyName
-              openId
               snsName
             }
             content
@@ -20,25 +19,36 @@ export const GET_TRENDING_FEED = `
 
 export const GET_TIMELINE = `
 query Timeline($input: BaseQueryInput) {
-  timeline(input: $input) {
-    authorInfo {
-      openId
-      snsName
-      friendlyName
-      following {
-        totalCount
+  timeline {
+    posts(input: $input) {
+      totalCount
+      edges {
+        cursor
+        node {
+          authorInfo {
+            follower {
+              totalCount
+            }
+            following {
+              totalCount
+            }
+            followRelation {
+              followed
+              followingMe
+            }
+            friendlyName
+            snsName
+          }
+          content
+          id
+          postedAt
+        }
       }
-      follower {
-        totalCount
-      }
-      followRelation {
-        followed
-        followingMe
+      pageInfo {
+        endCursor
+        hasNextPage
       }
     }
-    content
-    id
-    postedAt
   }
 }`;
 

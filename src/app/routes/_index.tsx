@@ -7,6 +7,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ClientLoaderFunctionArgs } from "@remix-run/react";
 import { useUserState, UserProvider, useDataSource, LoadingState } from '../hooks/index';
 import { getAuth, loadUser, getTrendingFeed, getTimeline } from '../services/.server';
+import { authenticator } from "../services/.server/auth";
 
 export const links: LinksFunction = () => [
   {
@@ -35,6 +36,8 @@ interface IndexClientLoaderContext extends IndexLoaderContext {
 export async function loader(args: LoaderFunctionArgs): Promise<IndexLoaderContext> {
   const { request } = args;
 
+  const user = await authenticator.isAuthenticated(request);
+  
   const serverContext = new ServerContextValue();
   const clientContext = new ClientContextValue(serverContext);
   const cookie = request.headers.get("Cookie");

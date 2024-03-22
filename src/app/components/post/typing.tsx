@@ -59,7 +59,7 @@ export const Typing: FC<TypingProps> = ({ onPost, currentUser: initialCurrentUse
             setTimeout(() => {
                 setButtonText("Post");
                 setButtonColor("primary");
-            }, 1000);
+            }, 600);
         }
     }, [hookState]);
 

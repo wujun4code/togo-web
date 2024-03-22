@@ -42,17 +42,33 @@ export const loadUser = async (args: LoaderFunctionArgs, serverContext: IServerC
     const oauth2User = parseJwt(auth?.accessToken);
 
     const GET_MY_PROFILE = `
-    query Profile {
-        myProfile {
-          openId
-          snsName
-          friendlyName
-          following {
-            totalCount
-          }
+    query Query($input: BaseQueryInput) {
+        userProfile {
           follower {
             totalCount
           }
+          following {
+            totalCount
+          }
+          friendlyName
+          oauth2BindingsConnection(input: $input) {
+            edges {
+              cursor
+              node {
+                oauth2 {
+                  clientId
+                  provider
+                }
+                openId
+              }
+            }
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+            totalCount
+          }
+          snsName
         }
       }`;
 

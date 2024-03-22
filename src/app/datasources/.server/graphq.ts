@@ -40,5 +40,7 @@ export const proxyGraphQL = async (
         }
         return data;
     }
+
+    console.log(`gql:${gql}`);
     throw new Error(`status: ${response.status},statusText: ${response.statusText}`)
 }
