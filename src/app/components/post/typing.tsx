@@ -1,6 +1,6 @@
 import React, { useState, FC, useEffect } from "react";
-import { Textarea } from "@nextui-org/react";
-import { Button } from "@nextui-org/react";
+import { Textarea } from "@components/index";
+import { Button } from "@components/index";
 import { useMutation, useDataSource, useUserState, AsyncLoaderState, useTopic } from '../../hooks';
 import { GQL } from '../../contracts/graphql';
 import { getGqlHeaders, IUserContext } from '../../contracts'
@@ -64,22 +64,21 @@ export const Typing: FC<TypingProps> = ({ onPost, currentUser: initialCurrentUse
     }, [hookState]);
 
 
-    const handleTextareaChange = (e: string) => {
-        setTextareaContent(e);
+    const handleTextareaChange = (content: string) => {
+        setTextareaContent(content);
     };
 
     return (<div className="flex flex-col gap-2">
         <Textarea
             value={textareaContent}
-            isDisabled={loading}
-            onValueChange={handleTextareaChange}
-            label="What's your next ToGo?"
+            disabled={loading}
+            onChange={e => handleTextareaChange(e.target.value)}
             placeholder=""
             className="max-w-2xl" />
         <motion.div className="flex flex-col gap-2"
             animate={controls}
             whileTap={{ scale: 0.95 }}>
-            <Button isDisabled={!textareaContent.trim() || loading}
+            <Button disabled={!textareaContent.trim() || loading}
                 onClick={handleButtonClick}
                 color={buttonColor} size="lg">
                 {buttonText}

@@ -1,20 +1,22 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { FC, useEffect, useState } from "react";
-import { IUserContext, Post } from '../../contracts';
+import { IUserContext, Post, PostConnection, Edge } from '../../contracts';
 import { useCharactersContext, useTopic } from "../../hooks";
 import { PostCard, PostCardProps } from './card';
 
+
 interface TimelineProps {
   load?: () => Promise<PostCardProps[]>;
-  data?: any;
+  data: PostConnection;
   currentUser?: IUserContext;
   serverUrlX: string;
 }
 
 export interface TimelineState {
   loading: boolean;
-  data: PostCardProps[];
+  data: PostConnection;
 }
+
 
 export const TimelineCards: FC<TimelineProps> = ({ load, serverUrlX, data, currentUser: initialCurrentUser }) => {
 
@@ -44,31 +46,37 @@ export const TimelineCards: FC<TimelineProps> = ({ load, serverUrlX, data, curre
   }
 
 
-  const mapToCardProps = (p: any) => {
+  const mapToCardProps = (post: Post) => {
+
+    const { authorInfo } = post;
+
     return {
-      id: p.id,
-      content: p.content,
-      postedAt: new Date(p.postedAt),
+      id: post.id,
+      content: post.content,
+      postedAt: new Date(post.postedAt),
       author: {
+        avatar: authorInfo.avatar,
+        bio: authorInfo.bio,
         following: {
-          totalCount: p.authorInfo.following.totalCount,
+          totalCount: authorInfo.following.totalCount,
         },
         follower: {
-          totalCount: p.authorInfo.follower.totalCount,
+          totalCount: authorInfo.follower.totalCount,
         },
-        followed: p.authorInfo?.followRelation?.followed ? p.authorInfo.followRelation.followed : false,
-        followingMe: p.authorInfo?.followRelation?.followingMe ? p.authorInfo.followRelation.followingMe : false,
-        openId: p.authorInfo.openId,
-        snsName: p.authorInfo.snsName,
-        friendlyName: p.authorInfo.friendlyName,
+        followed: authorInfo?.followRelation?.followed ? authorInfo.followRelation.followed : false,
+        followingMe: authorInfo?.followRelation?.followingMe ? authorInfo.followRelation.followingMe : false,
+        openId: authorInfo.openId,
+        snsName: authorInfo.snsName,
+        friendlyName: authorInfo.friendlyName,
       },
       currentUser: currentUser
     };
   }
 
-  const [posts, setPosts] = useState<Post[]>(data);
+  const [posts, setPosts] = useState<PostConnection>(data);
   const [currentUser] = useState(initialCurrentUser);
-  const [cards, setCards] = useState(posts ? posts.map(mapToCardProps) : []);
+
+  const [cards, setCards] = useState(posts ? posts.edges.map(e => mapToCardProps(e.node)) : []);
 
   const { on, off } = useTopic();
   useEffect(() => {

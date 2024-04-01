@@ -38,13 +38,16 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             sub: '',
             roles: [],
             resource: '',
+            email: '',
+            clientId: '',
+            provider: '',
         },
         togo: {
-            openId: '',
             friendlyName: '',
             snsName: '',
-            follower:{},
-            following:{},
+            follower: {},
+            following: {},
+            openId: '',
         },
     });
 

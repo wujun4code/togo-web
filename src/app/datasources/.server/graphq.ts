@@ -1,5 +1,10 @@
 
 import type { LoaderFunctionArgs } from "@remix-run/node";
+import { IServerContext, getGqlHeaders } from '@contracts';
+
+export const executeGraphQL = async (args: LoaderFunctionArgs, serverContext: IServerContext, gql: string, variables?: any) => {
+    return await proxyGraphQL(args, serverContext.dataSourceConfig.graphql.serverUrl, gql, variables, getGqlHeaders(serverContext.user));
+}
 
 export const proxyGraphQL = async (
     args: LoaderFunctionArgs,

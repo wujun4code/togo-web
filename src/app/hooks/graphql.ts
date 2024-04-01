@@ -68,13 +68,18 @@ export function useMutation(serverUrl: string, mutation: string, queryName: stri
         catch (error) {
             setHookState(AsyncLoaderState.Failed);
         }
+        finally {
+            //setHookState(AsyncLoaderState.Init);
+        }
     };
 
     const loading = hookState === AsyncLoaderState.Loading;
 
     const succeeded = hookState === AsyncLoaderState.Loaded;
 
-    return { mutateData, data, hookState, loading, succeeded };
+    const init = hookState === AsyncLoaderState.Init;
+
+    return { mutateData, data, hookState, loading, succeeded, init };
 }
 
 export function useGraphQL({ serverUrl, gql, queryName, variables, headers, }:

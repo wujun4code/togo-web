@@ -1,10 +1,10 @@
-import { Button, Image, Link, Navbar, NavbarBrand, NavbarContent, NavbarItem } from "@nextui-org/react";
+import { Button} from "@components/index";
 import type { LinksFunction, LoaderFunctionArgs, MetaFunction, ActionFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ClientLoaderFunctionArgs } from "@remix-run/react";
 import { Form } from '@remix-run/react';
-import { authenticator } from "../services/.server/auth";
+import { authenticator } from "../services/server/auth";
 
 export const links: LinksFunction = () => [
     {
@@ -25,7 +25,7 @@ export default function Screen() {
         <>
             <div className="flex justify-center items-center h-screen bg-blue-950">
                 <div className="w-96 h-96 flex flex-col justify-center items-center gap-2 bg-white rounded-lg">
-                    <Image
+                    <img
                         className="size-24"
                         alt="Towa Logo"
                         src="/logo-blue.svg"

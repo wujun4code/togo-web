@@ -1,5 +1,5 @@
 import { OAuth2DataSource, GraphQLDataSource, GeoDataSource, GraphQLConfig, OAuth2Config } from '../datasources/index';
-import { WeatherService, PostService, OAuthUserService, KeycloakUserService } from '../services/index';
+import { WeatherService, PostService } from '../services/index';
 import React, { createContext, useContext, useState } from 'react';
 
 export interface IDataSources {
@@ -11,7 +11,7 @@ export interface IDataSources {
 export interface IServices {
     weather: WeatherService;
     post: PostService;
-    oauth2: OAuthUserService;
+    //oauth2: OAuthUserService;
 }
 
 export interface DataSourceConfig {
@@ -21,20 +21,30 @@ export interface DataSourceConfig {
 
 export interface OAuthUserProps {
     sub: string;
+    email: string;
     roles: string[];
     resource: string;
+    provider: string;
+    clientId: string;
 }
 
 export interface ToGoUserProps {
-    openId: string;
     friendlyName: string;
     snsName: string;
     following?: any;
     follower?: any;
+    openId: string;
+    avatar?: string;
+    bio?: string;
 }
 
 export const getGqlHeaders = (user?: IUserContext) => {
-    return user ? { 'x-forwarded-access-token': user.accessToken } : {}
+
+    return user ? {
+        'Authorization': user?.accessToken ? `Bearer ${user?.accessToken}` : "",
+        'x-oauth2-token-provider': user?.oauth2.provider ? `${user?.oauth2.provider}` : "",
+        'x-oauth2-client-id': user?.oauth2.clientId ? `${user?.oauth2.clientId}` : "",
+    } : {}
 }
 
 export interface IUserContext {
@@ -56,7 +66,7 @@ export type ToGoEnvironment = {
 }
 
 export interface IServerServices {
-    oauth2: OAuthUserService;
+    //oauth2: OAuthUserService;
 }
 
 export interface IServerContext {
@@ -83,7 +93,7 @@ export class ServerContextValue implements IServerContext {
             devToken: process.env.devToken ? process.env.devToken : "",
         };
         this.services = {
-            oauth2: new KeycloakUserService({ resource: "express-middleware" }),
+            //oauth2: new KeycloakUserService({ resource: "express-middleware" }),
         };
     }
 }
@@ -104,7 +114,7 @@ export class ClientContextValue implements IClientContext {
         this.services = {
             weather: new WeatherService(),
             post: new PostService(),
-            oauth2: new KeycloakUserService({ resource: "express-middleware" })
+            //oauth2: new KeycloakUserService({ resource: "express-middleware" })
         };
 
         this.node_env = serverContext.node_env;
@@ -114,6 +124,7 @@ export class ClientContextValue implements IClientContext {
             //     accessToken: this.togo.devToken,
             // };
         }
+        this.user = serverContext.user;
     }
 }
 

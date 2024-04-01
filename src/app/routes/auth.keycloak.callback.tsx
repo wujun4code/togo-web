@@ -1,9 +1,9 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
-import { authenticator } from "../services/.server/auth";
+import { authenticator, keycloakName } from "../services/server/auth";
 
 export async function loader({ request }: LoaderFunctionArgs) {
-    const user = await authenticator.authenticate("togo", request, {
-        successRedirect: "/profile",
+    const user = await authenticator.authenticate(keycloakName, request, {
+        successRedirect: "/",
         failureRedirect: "/login",
     });
 };

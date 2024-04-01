@@ -1,4 +1,5 @@
 import { IClientContext, AuthorInfo, Post } from '../contracts';
+
 export class PostService {
 
   async getTrendingFeed(context: IClientContext): Promise<Post[]> {

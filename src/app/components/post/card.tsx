@@ -1,40 +1,52 @@
-import { Avatar, Button, Card, CardBody, CardFooter, CardHeader, Skeleton } from "@nextui-org/react";
+import {
+  Button, Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@components/index";
+import { DotsHorizontalIcon } from "@radix-ui/react-icons";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@components/index"
+import { BiRepost } from "react-icons/bi";
+import { FaRegComment } from "react-icons/fa6";
+import { AiOutlineLike, AiOutlineDislike } from "react-icons/ai";
+import { Separator } from "@components/index"
+import { CommentAddDialog, AvatarSNS } from '@components/index';
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@components/ui/drawer";
+
+
 import React, { FC, useState } from "react";
 import { IUserContext } from '../../contracts/context';
 import { LoadingState, useUserState } from "../../hooks";
-
-
-export const TestSkeleton = () => {
-  const [isLoaded, setIsLoaded] = React.useState(false);
-
-  const toggleLoad = () => {
-    setIsLoaded(!isLoaded);
-  };
-
-  return (
-    <div className="flex flex-col gap-3">
-      <Card className="w-[200px] space-y-5 p-4" radius="lg">
-        <Skeleton isLoaded={isLoaded} className="rounded-lg">
-          <div className="h-24 rounded-lg bg-secondary"></div>
-        </Skeleton>
-        <div className="space-y-3">
-          <Skeleton isLoaded={isLoaded} className="w-3/5 rounded-lg">
-            <div className="h-3 w-full rounded-lg bg-secondary"></div>
-          </Skeleton>
-          <Skeleton isLoaded={isLoaded} className="w-4/5 rounded-lg">
-            <div className="h-3 w-full rounded-lg bg-secondary-300"></div>
-          </Skeleton>
-          <Skeleton isLoaded={isLoaded} className="w-2/5 rounded-lg">
-            <div className="h-3 w-full rounded-lg bg-secondary-200"></div>
-          </Skeleton>
-        </div>
-      </Card>
-      <Button size="sm" variant="flat" color="secondary" onPress={toggleLoad}>
-        {isLoaded ? "Show" : "Hide"} Skeleton
-      </Button>
-    </div>
-  );
-}
+import {
+  ChevronDownIcon,
+  CircleIcon,
+  PlusIcon,
+  StarIcon,
+} from "@radix-ui/react-icons"
+import { Link } from "@remix-run/react";
 
 export type Author = {
   following:
@@ -50,6 +62,8 @@ export type Author = {
   openId: string;
   friendlyName: string;
   snsName: string;
+  avatar?: string;
+  bio?: string;
 }
 
 export interface PostCardProps {
@@ -60,62 +74,96 @@ export interface PostCardProps {
   currentUser?: IUserContext
 }
 
-export const PostCard: FC<PostCardProps> = ({ author, content, postedAt, currentUser: initialCurrentUser }) => {
+export const PostCard: FC<PostCardProps> = ({ id, author, content, postedAt, currentUser: initialCurrentUser }) => {
 
   const [isFollowed, setIsFollowed] = React.useState(author.followed ? author.followed : false);
   const [user, setUser] = useState(initialCurrentUser);
   const { currentUser, setCurrentUser, loadingState, setLoadingState } = useUserState();
-  const currentUserOpenId = user?.togo?.openId;
+  const currentUserOpenId = '';
 
   const [isHideFollow, setIsHideFollow] = React.useState(currentUserOpenId === author.openId);
 
-  function kFormatter(num: number): string {
-    return Math.abs(num) > 999
-      ? `${Math.sign(num) * parseInt((Math.abs(num) / 1000).toFixed(1))}k`
-      : `${Math.sign(num) * Math.abs(num)}`;
+  const labels = [
+    {
+      value: "bug",
+      label: "Bug",
+    },
+    {
+      value: "feature",
+      label: "Feature",
+    },
+    {
+      value: "documentation",
+      label: "Documentation",
+    },
+  ]
+
+  const handleCardClick = (id: string) => {
+
   }
 
-  //return (<TestSkeleton />)
-
   return (
-    <Card className="">
-      <CardHeader className="justify-between">
-        <div className="flex gap-5">
-          <Skeleton isLoaded={loadingState === LoadingState.Loaded} className="rounded-full">
-            <Avatar isBordered radius="full" size="md" name={author.friendlyName} />
-          </Skeleton>
-          <div className="flex flex-col gap-1 items-start justify-center">
-            <h4 className="text-small font-semibold leading-none text-default-600">{author.friendlyName}</h4>
-            <h5 className="text-small tracking-tight text-default-400">@{author.snsName}</h5>
-          </div>
-        </div>
+    <>
 
-        {!isHideFollow && <Button
-          className={isFollowed ? "bg-transparent text-foreground border-default-200" : ""}
-          color="primary"
-          radius="full"
-          size="sm"
-          variant={isFollowed ? "bordered" : "solid"}
-          onPress={() => setIsFollowed(!isFollowed)}
-        >
-          {isFollowed ? "Unfollow" : "Follow"}
-        </Button>}
-      </CardHeader>
-      <CardBody className="px-3 py-0 text-small text-default-400">
-        <p className="line-clamp-3 ...">
-          {content}
-        </p>
-      </CardBody>
-      <CardFooter className="gap-3">
-        <div className="flex gap-1">
-          <p className="font-semibold text-default-400 text-small">{kFormatter(author.following.totalCount)}</p>
-          <p className=" text-default-400 text-small">Following</p>
-        </div>
-        <div className="flex gap-1">
-          <p className="font-semibold text-default-400 text-small">{kFormatter(author.follower.totalCount)}</p>
-          <p className="text-default-400 text-small">Followers</p>
-        </div>
-      </CardFooter>
-    </Card>
+      <Card onClick={e => handleCardClick(id)} className="hover:bg-gray-100">
+        <CardHeader className="flex flex-row gap-4 space-y-0 justify-between p-2 px-4 pt-6 pb-2">
+          <AvatarSNS {...author} />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="flex h-8 w-8 p-0 data-[state=open]:bg-muted justify-self-end">
+                <DotsHorizontalIcon className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-[160px]">
+              <DropdownMenuItem>Edit</DropdownMenuItem>
+              <DropdownMenuItem>Make a copy</DropdownMenuItem>
+              <DropdownMenuItem>Favorite</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>Labels</DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  <DropdownMenuRadioGroup value="xxx">
+                    {labels.map((label) => (
+                      <DropdownMenuRadioItem key={label.value} value={label.value}>
+                        {label.label}
+                      </DropdownMenuRadioItem>
+                    ))}
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                Delete
+                <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+        </CardHeader>
+        <Link to={`/post/${id}`}>
+          <CardContent className="cursor-pointer p-2 px-4 pt-2">
+            <p>{content}</p>
+          </CardContent>
+        </Link>
+        <CardFooter className="p-2 px-4 pt-2">
+          <CommentAddDialog postId={id} />
+          {/* <Button className="hover:text-sky-500" variant="outline" size="icon">
+            <FaRegComment />
+          </Button> */}
+          <Button className="hover:text-green-500" variant="outline" size="icon">
+            <BiRepost />
+          </Button>
+          <Button className="hover:text-blue-500" variant="outline" size="icon">
+            <AiOutlineLike />
+          </Button>
+          <Button className="hover:text-red-500" variant="outline" size="icon">
+            <AiOutlineDislike />
+          </Button>
+        </CardFooter>
+      </Card>
+
+    </>
   );
 }
