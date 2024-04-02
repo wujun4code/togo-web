@@ -14,7 +14,7 @@ import {
     HoverCardTrigger,
 } from "@components";
 
-import { useMutation, useDataSource, useUserState, AsyncLoaderState, useTopic } from '@hooks';
+import { useMutation, useDataSource, useUserState, AsyncLoaderState, useTopic, useQuery } from '@hooks';
 import { IUserContext, getGqlHeaders, SharedPublicProfile } from '@contracts';
 import { GQL } from '@GQL';
 import { kFormatter } from '../../services';
@@ -60,9 +60,6 @@ export interface FollowButtonProps {
 }
 
 export const FollowRelationButton: FC<FollowButtonProps> = ({ currentUser, targetUser, followRelation }) => {
-
-    //console.log(`followRelation:${JSON.stringify(followRelation)}`);
-
     if (!followRelation) followRelation = {};
     const { asFollower, asFollowee } = followRelation;
 
@@ -76,8 +73,8 @@ export const FollowRelationButton: FC<FollowButtonProps> = ({ currentUser, targe
     const { dataSourceConfig } = useDataSource();
 
     const { pub } = useTopic();
-    const { mutateData: followMutation, loading: followingLoading, succeeded: followed, hookState: followingHookState, data: followedData, init: followedInit } = useMutation(dataSourceConfig.graphql.serverUrl, GQL.FOLLOW, 'follow', null, getGqlHeaders(currentUser));
-    const { mutateData: unfollowMutation, loading: unfollowingLoading, succeeded: unfollowed, hookState: unfollowingHookState, data: unfollowedData, init: followeeInit } = useMutation(dataSourceConfig.graphql.serverUrl, GQL.UNFOLLOW, 'unfollow', null, getGqlHeaders(currentUser));
+    const { mutateData: followMutation, loading: followingLoading, succeeded: followed, hookState: followingHookState, data: followedData, error: followError } = useMutation(dataSourceConfig.graphql.serverUrl, GQL.FOLLOW, 'follow', null, getGqlHeaders(currentUser));
+    const { mutateData: unfollowMutation, loading: unfollowingLoading, succeeded: unfollowed, hookState: unfollowingHookState, data: unfollowedData } = useMutation(dataSourceConfig.graphql.serverUrl, GQL.UNFOLLOW, 'unfollow', null, getGqlHeaders(currentUser));
 
     const handleButtonClick = async () => {
         if (isFollowing) {
@@ -96,10 +93,16 @@ export const FollowRelationButton: FC<FollowButtonProps> = ({ currentUser, targe
     };
 
     useEffect(() => {
+
         if (followingLoading === true || unfollowingLoading === true) {
             setButtonDisable(true);
         }
 
+        if (followError) {
+            if (followError === 401) {
+                pub('require', 'login', true);
+            }
+        }
         if (!isFollowing && followed) {
             const newFollowing = {
                 id: followedData.followerRank,
@@ -125,13 +128,12 @@ export const FollowRelationButton: FC<FollowButtonProps> = ({ currentUser, targe
                 setButtonDisable(false);
             }, 600);
         }
-    }, [followingHookState, unfollowingHookState]);
+    }, [followingHookState, unfollowingHookState, followRelation]);
 
     if (currentUser && currentUser.togo.snsName === targetUser.snsName) {
         return (<></>);
     }
     else
-
         return (<Button disabled={buttonDisable} onClick={handleButtonClick}>{buttonText}</Button>);
 }
 
@@ -194,7 +196,16 @@ export const ProfileHeader: FC<SharedDetailProps> = (props: SharedDetailProps) =
     );
 }
 
-export const PostHeader: FC<SharedDetailProps> = ({ avatar, snsName, friendlyName, follower, following, bio }) => {
+export const PostHeader: FC<SharedDetailProps> = (props: SharedDetailProps) => {
+
+    const { avatar, snsName, friendlyName, follower, following, bio, followRelation, currentUser } = props;
+
+    const followButtonProps = {
+        currentUser,
+        targetUser: { snsName: snsName },
+        followRelation,
+    };
+
     return (
         <div className="flex justify-between grow items-center">
             <div className="flex items-center space-x-4">
@@ -209,13 +220,18 @@ export const PostHeader: FC<SharedDetailProps> = ({ avatar, snsName, friendlyNam
                     <p className="text-sm text-muted-foreground  cursor-pointer hover:underline"><Link to={`/${snsName}`}>@{snsName}</Link></p>
                 </div>
             </div>
-            <Button>Follow</Button>
+            <FollowRelationButton {...followButtonProps} />
         </div>
     );
 }
 
-export const ProfileDetailCard: FC<SharedDetailProps> = ({ avatar, snsName, friendlyName, follower, following, bio }) => {
-
+export const ProfileDetailCard: FC<SharedDetailProps> = (props: SharedDetailProps) => {
+    const { avatar, snsName, friendlyName, follower, following, bio, followRelation, currentUser } = props;
+    const followButtonProps = {
+        currentUser,
+        targetUser: { snsName: snsName },
+        followRelation,
+    };
     return (
         <div className="flex flex-col gap-4 grow">
             <div className="flex justify-between cursor-pointer">
@@ -225,7 +241,7 @@ export const ProfileDetailCard: FC<SharedDetailProps> = ({ avatar, snsName, frie
                         <AvatarFallback>{friendlyName?.length || 0 >= 2 ? friendlyName?.substring(0, 2) : friendlyName?.substring(0, 1)}</AvatarFallback>
                     </Avatar></Link>) : (<Link to={`/${snsName}`}><Avatar><AvatarFallback>{friendlyName?.length || 0 >= 2 ? friendlyName?.substring(0, 2) : friendlyName?.substring(0, 1)}</AvatarFallback></Avatar></Link>)}
                 </div>
-                <Button>Follow</Button>
+                <FollowRelationButton {...followButtonProps} />
             </div>
             <div className="flex items-center">
                 <div>
@@ -250,11 +266,40 @@ export const ProfileDetailCard: FC<SharedDetailProps> = ({ avatar, snsName, frie
     );
 }
 
-export const AvatarSNS: FC<AvatarSNSProps> = (props: AvatarSNSProps) => {
-    const { avatar, friendlyName, snsName } = props;
+export const AvatarSNS: FC<SharedDetailProps> = (props: SharedDetailProps) => {
+    const { avatar, friendlyName, snsName, currentUser, followRelation } = props;
+
+    const [open, setOpen] = React.useState(false);
+    const [followRelationState, setFollowRelationState] = React.useState(followRelation);
+    const { dataSourceConfig } = useDataSource();
+
+    const { queryData: followRelationQuery, loading: followRelationLoading, succeeded: followRelationSucceeded, hookState: followRelationHookState, data: followRelationData } =
+        useQuery(dataSourceConfig.graphql.serverUrl, GQL.FOLLOW_RELATION, 'followRelation', {
+            "input": {
+                "originalSnsName": currentUser?.togo.snsName,
+                "targetSnsName": snsName,
+            }
+        }, getGqlHeaders(currentUser));
+
+
+    const onProfileDetailCardOpen = async (open: boolean) => {
+        if (open) {
+            const data = await followRelationQuery({
+                "input": {
+                    "originalSnsName": currentUser?.togo.snsName,
+                    "targetSnsName": snsName,
+                }
+            });
+            setFollowRelationState(data);
+            setOpen(open);
+        } else {
+            setOpen(open);
+        }
+    };
+
     return (
         <>
-            <HoverCard>
+            <HoverCard open={open} onOpenChange={onProfileDetailCardOpen}>
                 <HoverCardTrigger asChild>
                     <div className="flex items-center space-x-4">
                         {avatar ? (<Link to={`/${snsName}`}><Avatar>
@@ -268,7 +313,7 @@ export const AvatarSNS: FC<AvatarSNSProps> = (props: AvatarSNSProps) => {
                     </div>
                 </HoverCardTrigger>
                 <HoverCardContent className="w-80" side="bottom" align="center">
-                    <ProfileDetailCard {...props} />
+                    <ProfileDetailCard {...props} followRelation={followRelationState} />
                 </HoverCardContent>
             </HoverCard>
         </>

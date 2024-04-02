@@ -2,7 +2,7 @@ import type { LinksFunction, LoaderFunctionArgs, MetaFunction } from "@remix-run
 import { TypedResponse, json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { NavHeader, CommentListCards } from '../components';
-import { ServerContextValue } from '../contracts';
+import { ServerContextValue, IUserContext } from '@contracts';
 import { kFormatter } from '../services';
 import { AuthenticatedUser, authenticator } from "../services/server/auth";
 import { getPost } from '../services/server';
@@ -13,11 +13,19 @@ import { useRouteLoaderData } from "@remix-run/react";
 import { IServerContext } from '../contracts';
 import { Separator } from "@components/ui/separator";
 import { CommentAddDialog, AvatarSNS, PostHeader } from '@components/index';
+import { syncMyProfile, getPublicProfile } from '../services/server/user';
+import { getFollowRelation } from '@services/server';
 
 type PostDetailProps = {
     id: string;
     content: string;
 }
+
+export const meta: MetaFunction<typeof loader> = ({
+    data,
+}) => {
+    return [{ title: data?.detail?.content }];
+};
 
 interface PostDetailContext {
     author?: any;
@@ -26,6 +34,8 @@ interface PostDetailContext {
     repost?: any;
     like?: any;
     bookmark?: any;
+    currentUser?: IUserContext;
+    followRelation?: any;
 }
 
 export async function loader(args: LoaderFunctionArgs): Promise<TypedResponse<PostDetailContext>> {
@@ -48,6 +58,10 @@ export async function loader(args: LoaderFunctionArgs): Promise<TypedResponse<Po
     // const user = await authenticator.isAuthenticated(request);
 
     const serverContext = new ServerContextValue();
+    const user = await authenticator.isAuthenticated(request);
+
+    if (user !== null)
+        await syncMyProfile(args, serverContext, user);
 
     const post = await getPost(args, serverContext, { postId: postId });
 
@@ -56,14 +70,25 @@ export async function loader(args: LoaderFunctionArgs): Promise<TypedResponse<Po
         content: post.content,
     };
 
+    let followRelation = {};
 
-    const data = json({ detail: detail, comments: post.comments, author: post.authorInfo });
+    if (serverContext.user) {
+        followRelation = await getFollowRelation(args, serverContext, {
+            "input": {
+                "originalSnsName": serverContext.user.togo.snsName,
+                "targetSnsName": post.authorInfo.snsName,
+            }
+        });
+    }
+
+
+    const data = json({ detail: detail, currentUser: serverContext.user, comments: post.comments, author: post.authorInfo, followRelation: followRelation });
 
     return data;
 }
 
 export default function Screen() {
-    const { detail, comments, author } = useLoaderData<typeof loader>();
+    const { detail, comments, author, followRelation, currentUser } = useLoaderData<typeof loader>();
 
 
     return (
@@ -75,13 +100,13 @@ export default function Screen() {
                 </div>
                 <div className="basis-1/2 flex flex-col max-w-2xl gap-2 ">
                     <div className="flex flex-row gap-4 space-y-0 justify-between">
-                        <PostHeader {...author} />
+                        <PostHeader {...author} currentUser={currentUser} followRelation={followRelation} />
                     </div>
                     <p className="leading-7 [&:not(:first-child)]:mt-4">
                         {detail?.content}
                     </p>
                     <Separator />
-                    <CommentListCards commentConnection={comments} postId={detail!.id} />
+                    <CommentListCards commentConnection={comments} postId={detail!.id} currentUser={currentUser} />
                 </div>
             </main>
         </>

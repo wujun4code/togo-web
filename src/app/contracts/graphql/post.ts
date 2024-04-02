@@ -101,6 +101,12 @@ query Post($postId: ID!) {
             bio
             snsName
             friendlyName
+            follower {
+              totalCount
+            }
+            following {
+              totalCount
+            }
           }          
         }
       }

@@ -16,13 +16,17 @@ export const Typing: FC<TypingProps> = ({ onPost, currentUser: initialCurrentUse
     const [textareaContent, setTextareaContent] = useState('');
     const { dataSourceConfig } = useDataSource();
     const [currentUser, setCurrentUser] = useState(initialCurrentUser);
-    const { currentUser: contextCurrentUser } = useUserState();
     const [buttonText, setButtonText] = useState('Post');
     const [buttonColor, setButtonColor] = useState<`default` | `primary` | `secondary` | `success` | `warning` | `danger`>('primary');
 
     const { pub } = useTopic();
-    const { mutateData, loading, succeeded, hookState, data: addedPost } = useMutation(dataSourceConfig.graphql.serverUrl, GQL.CREATE_POST, 'createPost', null, getGqlHeaders(currentUser));
+    const { mutateData, loading, succeeded, hookState, data: addedPost, error } = useMutation(dataSourceConfig.graphql.serverUrl, GQL.CREATE_POST, 'createPost', null, getGqlHeaders(currentUser));
     const handleButtonClick = () => {
+
+        if (!currentUser) {
+            pub('require', 'login', true);
+            return;
+        }
         if (onPost) {
             onPost(textareaContent);
         }
@@ -44,6 +48,12 @@ export const Typing: FC<TypingProps> = ({ onPost, currentUser: initialCurrentUse
 
         if (loading) {
             setButtonText("Sending...");
+        }
+
+        if (error) {
+            if (error === 401) {
+                pub('require', 'login', true);
+            }
         }
 
         if (succeeded) {

@@ -22,12 +22,12 @@ export const links: LinksFunction = () => [
   }
 ];
 
-export const meta: MetaFunction = () => {
-  return [
-    { title: "ToGo" },
-    { name: "description", content: "Welcome to Towa!" },
-  ];
+export const meta: MetaFunction<typeof loader> = ({
+  data,
+}) => {
+  return [{ title: data?.basic?.friendlyName }];
 };
+
 
 type BasicProps = {
   avatar?: string;
@@ -81,13 +81,13 @@ export async function loader(args: LoaderFunctionArgs): Promise<TypedResponse<Pr
   }
 
   const data = json({ currentUser: serverContext.user, basic: targetUser, followRelation: followRelation });
-  //console.log(`followRelation:${JSON.stringify(followRelation)}`);
+
   return data;
 }
 
 export default function Screen() {
   const { currentUser, basic, followRelation } = useLoaderData<typeof loader>();
-  
+
   return (
     <>
       <NavHeader title="Profile" />
@@ -111,9 +111,9 @@ export default function Screen() {
               <TabsContent value="likes">Change your password here.</TabsContent>
             </Tabs>
           </div>
-          <Form action="/auth/logout" method="post">
+          {/* <Form action="/auth/logout" method="post">
             <Button className="w-full max-w-2xl" color="danger" type="submit">Log Out</Button>
-          </Form>
+          </Form> */}
         </div>
       </main>
     </>

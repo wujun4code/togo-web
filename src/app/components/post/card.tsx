@@ -107,7 +107,7 @@ export const PostCard: FC<PostCardProps> = ({ id, author, content, postedAt, cur
 
       <Card onClick={e => handleCardClick(id)} className="hover:bg-gray-100">
         <CardHeader className="flex flex-row gap-4 space-y-0 justify-between p-2 px-4 pt-6 pb-2">
-          <AvatarSNS {...author} />
+          <AvatarSNS {...author} currentUser={user} />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button

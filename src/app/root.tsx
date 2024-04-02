@@ -13,9 +13,10 @@ import styles from "./tailwind.css";
 import { authenticator } from "./services/server/auth";
 import { ClientContextValue, LoaderContext, ServerContextValue, IClientContext, IUserContext, IServerContext } from './contracts';
 import { syncMyProfile } from './services/server';
-import { useUserState, UserProvider, useDataSource, LoadingState } from './hooks/index';
+import { useUserState, UserProvider, useDataSource, LoadingState, useTopic } from '@hooks';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useLoaderData } from "@remix-run/react";
+import { useNavigate } from 'react-router-dom';
 
 export const links: LinksFunction = () => [
   ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] :
@@ -40,6 +41,8 @@ export default function App() {
 
   const { currentUser, setCurrentUser, loadingState, setLoadingState } = useUserState();
   const { dataSourceConfig, setDataSourceConfig } = useDataSource();
+  const { on, off } = useTopic();
+  const navigate = useNavigate();
   useEffect(() => {
     if (serverData.user) {
       setCurrentUser(serverData.user);
@@ -47,6 +50,15 @@ export default function App() {
     if (serverData.dataSourceConfig) {
       setDataSourceConfig(serverData.dataSourceConfig);
     }
+
+    const onRequiredLogIn = (payload: any) => {
+      return navigate("/login");
+    };
+    on('require', 'login', onRequiredLogIn);
+    return () => {
+      off('require', 'login', onRequiredLogIn);
+    };
+
   }, []);
   return (
     <html lang="en">

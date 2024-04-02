@@ -100,21 +100,15 @@ export const TimelineCards: FC<TimelineProps> = ({ load, serverUrlX, data, curre
       {!cards ? (
         <p>Loading...</p>
       ) :
-        <motion.div layout layoutId={"list"} className="flex flex-col gap-1">
-          <AnimatePresence>
-            {cards.map((post) => {
-              return (
-                <motion.div key={post.id}
-                  initial={{ x: -250, opacity: 0 }}
-                  animate={{ x: 0.2, opacity: 1 }}
-                  transition={{ duration: 0.1 }}
-                  exit={{ opacity: 0 }}>
-                  <PostCard  {...post}></PostCard>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
-        </motion.div>
+        <div>
+          {cards.map((post) => {
+            return (
+              <div key={post.id} className="">
+                <PostCard  {...post}></PostCard>
+              </div>
+            );
+          })}
+        </div>
       }
     </>
   );

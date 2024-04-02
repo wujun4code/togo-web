@@ -21,7 +21,7 @@ import {
 } from "@components/index"
 
 import { Separator } from "@components/index"
-import { IUserContext, Post, PostCommentConnection, Edge } from '../../contracts';
+import { IUserContext, Post, PostCommentConnection, Edge } from '@contracts';
 import React, { FC, useState } from "react";
 import { LoadingState, useUserState } from "../../hooks";
 import {
@@ -62,9 +62,10 @@ export interface CommentProps {
 export interface CommentListProps {
     postId: string;
     commentConnection: PostCommentConnection;
+    currentUser?: IUserContext
 }
 
-export const CommentListCards: FC<CommentListProps> = ({ commentConnection, postId }) => {
+export const CommentListCards: FC<CommentListProps> = ({ commentConnection, postId, currentUser }) => {
     const comments = commentConnection.edges.map(i => {
         return {
             ...i.node,
@@ -73,7 +74,8 @@ export const CommentListCards: FC<CommentListProps> = ({ commentConnection, post
                 ...i.node.authorInfo,
                 followed: false,
                 followingMe: false
-            }
+            },
+            currentUser
         };
     });
 
@@ -87,7 +89,7 @@ export const CommentListCards: FC<CommentListProps> = ({ commentConnection, post
     </>
 }
 
-export const CommentItemCard: FC<CommentProps> = ({ postId, id, author, content, createdAt, currentUser: initialCurrentUser }) => {
+export const CommentItemCard: FC<CommentProps> = ({ postId, id, author, content, createdAt, currentUser }) => {
 
     const labels = [
         {
@@ -115,7 +117,7 @@ export const CommentItemCard: FC<CommentProps> = ({ postId, id, author, content,
                 <CardHeader className="flex flex-row gap-4 space-y-0 justify-between">
                     <div className="space-y-1">
                         {/* <CardTitle>shadcn/ui</CardTitle> */}
-                        <AvatarSNS {...author} />
+                        <AvatarSNS {...author} currentUser={currentUser} />
 
                     </div>
                     <DropdownMenu>

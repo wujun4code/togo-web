@@ -1,13 +1,13 @@
 import type { LinksFunction, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import { ButtonGroup, TimelineCards, Typing, NavProfile, NavHeader } from '../components';
+import { ButtonGroup, TimelineCards, Typing, NavProfile, NavHeader, NavLinksPanel } from '@components';
 import { ClientContextValue, LoaderContext, ServerContextValue, IClientContext, IUserContext } from '../contracts';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ClientLoaderFunctionArgs } from "@remix-run/react";
 import { useUserState, UserProvider, useDataSource, LoadingState } from '../hooks/index';
 import { syncMyProfile, getTrendingFeed, getTimeline } from '../services/server';
 import { authenticator } from "../services/server/auth";
-
+import { NavLinks } from '@components';
 export const links: LinksFunction = () => [
   {
     rel: "preload",
@@ -92,10 +92,12 @@ export default function Index() {
         console.error('Error fetching user data:', error);
       }
     };
+
     if (context.user) {
       setCurrentUser(context.user);
       setLoadingState(LoadingState.Loaded);
     }
+    
     if (server.dataSourceConfig) {
       setDataSourceConfig(server.dataSourceConfig);
     }
@@ -106,12 +108,15 @@ export default function Index() {
       <NavHeader />
       <main className="relative flex container mx-auto max-w-7xl z-10 px-6 p-4">
         <div className="flex basis-1/4 ">
-          <ButtonGroup className="flex flex-col gap-4" buttons={
+          {/* <ButtonGroup className="flex flex-col gap-4" buttons={
             [
               { id: 1, label: 'Home', startIcon: 'home' },
-              { id: 2, label: 'Profile', startIcon: 'avatar', linkTo: `/${server.user?.togo.snsName}` },
+              { id: 2, label: 'Profile', startIcon: 'avatar', linkTo: server.user ? `/${server.user?.togo.snsName}` : '/login' },
             ]} >
-          </ButtonGroup>
+          </ButtonGroup> */}
+
+          <NavLinksPanel context={context} />
+
         </div>
         <div className="basis-1/2 flex flex-col gap-2 max-w-2xl">
           <Typing currentUser={context.user} />

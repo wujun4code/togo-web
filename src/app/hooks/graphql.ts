@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { AsyncLoaderState } from '../hooks';
+import { AsyncLoaderState, GraphqlErrorCode } from '@hooks';
 
 export const execute = async (serverUrl: string, gql: string, variables?: any, headers?: any) => {
 
@@ -17,8 +17,8 @@ export const execute = async (serverUrl: string, gql: string, variables?: any, h
             }),
         });
 
-        const { data } = await response.json();
-        return data;
+        const res = await response.json();
+        return res;
     }
     catch (error) {
         console.error(error);
@@ -45,80 +45,61 @@ export function useAsyncAction(action: (input: any) => Promise<any>) {
     return { executeAction, data, hookState };
 }
 
-export function useMutation(serverUrl: string, mutation: string, queryName: string, variables?: any, headers?: any) {
+export function useGraphql(serverUrl: string, mutation: string, queryName: string, variables?: any, headers?: any) {
 
     const initData = {};
     const [data, setData] = useState(initData as any);
     const [hookState, setHookState] = useState<AsyncLoaderState>(AsyncLoaderState.Init);
+    const [error, setError] = useState<GraphqlErrorCode | undefined>(undefined);
 
-    const mutateData = async (variables: any) => {
+    const executeGraphql = async (variables: any) => {
 
+        let rootData = {};
         setHookState(AsyncLoaderState.Loading);
         try {
-            const rootData = await execute(serverUrl, mutation, variables, headers);
-            if (queryName in rootData) {
-                console.log('✅ graphql mutation');
-                setData(rootData[queryName]);
+            const { data: response, errors } = await execute(serverUrl, mutation, variables, headers);
+            if (queryName in response && response[queryName] != null) {
+                console.log('✅ graphql');
+                rootData = response[queryName];
+                setData(rootData);
                 setHookState(AsyncLoaderState.Loaded);
+                return rootData;
             }
             else {
                 setHookState(AsyncLoaderState.Failed);
+                if (errors?.[0]?.extensions?.code) {
+                    setError(errors?.[0]?.extensions?.code);
+                }
             }
         }
         catch (error) {
             setHookState(AsyncLoaderState.Failed);
         }
         finally {
-            //setHookState(AsyncLoaderState.Init);
+            return rootData;
         }
+
     };
 
     const loading = hookState === AsyncLoaderState.Loading;
 
     const succeeded = hookState === AsyncLoaderState.Loaded;
 
-    const init = hookState === AsyncLoaderState.Init;
-
-    return { mutateData, data, hookState, loading, succeeded, init };
+    return { executeGraphql, data, hookState, loading, succeeded, error };
 }
 
-export function useGraphQL({ serverUrl, gql, queryName, variables, headers, }:
-    { serverUrl: string, gql: string, queryName: string, variables?: any, headers?: any, }) {
+export function useMutation(serverUrl: string, mutation: string, queryName: string, variables?: any, headers?: any) {
 
-    const initData = {};
-    const [data, setData] = useState(initData);
-    const [hookState, setHookState] = useState<AsyncLoaderState>(AsyncLoaderState.Init);
+    const { executeGraphql, data, hookState, loading, succeeded, error } = useGraphql(serverUrl, mutation, queryName, variables, headers);
 
-    useEffect(() => {
+    return { mutateData: executeGraphql, data, hookState, loading, succeeded, error };
+}
 
-        const fetchData = async () => {
+export function useQuery(serverUrl: string, query: string, queryName: string, variables?: any, headers?: any) {
 
-            setHookState(AsyncLoaderState.Loading);
-            try {
-                const rootData = await execute(serverUrl, gql, variables, headers);
-                if (queryName in rootData) {
-                    console.log('✅ graphql fetched data.');
-                    setData(rootData[queryName]);
-                    setHookState(AsyncLoaderState.Loaded)
-                }
-                else {
-                    setHookState(AsyncLoaderState.Failed);
-                }
-            }
-            catch (error) {
-                setHookState(AsyncLoaderState.Failed);
-            }
-        };
+    const { executeGraphql, data, hookState, loading, succeeded, error } = useGraphql(serverUrl, query, queryName, variables, headers);
 
-        fetchData();
-
-        return () => {
-            setHookState(AsyncLoaderState.Loaded);
-        };
-
-    }, [serverUrl]);
-
-    return { data, hookState };
+    return { queryData: executeGraphql, data, hookState, loading, succeeded, error };
 }
 
 export function useChatRoom({ serverUrl, roomId }: { serverUrl: string, roomId: string }) {

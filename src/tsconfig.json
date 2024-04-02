@@ -46,6 +46,9 @@
       "@services/server": [
         "./app/services/server"
       ],
+      "@lib":[
+        "./app/lib"
+      ],
     },
     // Remix takes care of building everything in `remix build`.
     "noEmit": true
