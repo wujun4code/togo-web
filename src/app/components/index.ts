@@ -8,6 +8,7 @@ export * from './post/comment.card';
 export * from './profile/avatar.sns';
 export * from './post/comment.add';
 export * from './nav/icon-link';
+export * from './post/content';
 
 export * from './ui/button';
 export * from './ui/card';

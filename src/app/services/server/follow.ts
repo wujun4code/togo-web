@@ -6,6 +6,6 @@ import { GQL } from '@GQL';
 
 export const getFollowRelation = async (args: LoaderFunctionArgs, serverContext: IServerContext, variables?: any) => {
 
-  const { followRelation } = await executeGraphQL(args, serverContext, GQL.FOLLOW_RELATION, variables);
-  return followRelation;
+  const data = await executeGraphQL(args, serverContext, GQL.FOLLOW_RELATION, variables);
+  return data;
 }

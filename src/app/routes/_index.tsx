@@ -77,7 +77,6 @@ export default function Index() {
   const { currentUser, setCurrentUser, loadingState, setLoadingState } = useUserState();
 
   const { dataSourceConfig, setDataSourceConfig } = useDataSource();
-
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -97,7 +96,7 @@ export default function Index() {
       setCurrentUser(context.user);
       setLoadingState(LoadingState.Loaded);
     }
-    
+
     if (server.dataSourceConfig) {
       setDataSourceConfig(server.dataSourceConfig);
     }

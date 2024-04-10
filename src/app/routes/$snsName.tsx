@@ -69,18 +69,19 @@ export async function loader(args: LoaderFunctionArgs): Promise<TypedResponse<Pr
     }
   });
 
-  let followRelation = {};
+  let followRelationData = {} as any;
 
   if (serverContext.user) {
-    followRelation = await getFollowRelation(args, serverContext, {
-      "input": {
+    followRelationData = await getFollowRelation(args, serverContext, {
+      "followRelationInput": {
         "originalSnsName": serverContext.user.togo.snsName,
         "targetSnsName": targetUser.snsName,
-      }
+      },
+      "publicProfileInput": { "snsName": targetUser.snsName }
     });
   }
 
-  const data = json({ currentUser: serverContext.user, basic: targetUser, followRelation: followRelation });
+  const data = json({ currentUser: serverContext.user, basic: targetUser, followRelation: followRelationData ? followRelationData.followRelation : null });
 
   return data;
 }

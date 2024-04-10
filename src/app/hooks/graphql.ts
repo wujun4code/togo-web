@@ -45,23 +45,22 @@ export function useAsyncAction(action: (input: any) => Promise<any>) {
     return { executeAction, data, hookState };
 }
 
-export function useGraphql(serverUrl: string, mutation: string, queryName: string, variables?: any, headers?: any) {
+export function useGraphql(serverUrl: string, gql: string, headers?: any) {
 
-    const initData = {};
-    const [data, setData] = useState(initData as any);
+    const [data, setData] = useState<any>(undefined as any);
     const [hookState, setHookState] = useState<AsyncLoaderState>(AsyncLoaderState.Init);
     const [error, setError] = useState<GraphqlErrorCode | undefined>(undefined);
 
-    const executeGraphql = async (variables: any) => {
+    const executeGraphql = async (variables?: any) => {
 
-        let rootData = {};
+        let rootData = undefined as any;
         setHookState(AsyncLoaderState.Loading);
         try {
-            const { data: response, errors } = await execute(serverUrl, mutation, variables, headers);
-            if (queryName in response && response[queryName] != null) {
+            const { data: response, errors } = await execute(serverUrl, gql, variables, headers);
+            if (!errors) {
                 console.log('✅ graphql');
-                rootData = response[queryName];
-                setData(rootData);
+                rootData = response;
+                setData(response);
                 setHookState(AsyncLoaderState.Loaded);
                 return rootData;
             }
@@ -78,9 +77,7 @@ export function useGraphql(serverUrl: string, mutation: string, queryName: strin
         finally {
             return rootData;
         }
-
     };
-
     const loading = hookState === AsyncLoaderState.Loading;
 
     const succeeded = hookState === AsyncLoaderState.Loaded;
@@ -88,18 +85,18 @@ export function useGraphql(serverUrl: string, mutation: string, queryName: strin
     return { executeGraphql, data, hookState, loading, succeeded, error };
 }
 
-export function useMutation(serverUrl: string, mutation: string, queryName: string, variables?: any, headers?: any) {
+export function useMutation(serverUrl: string, mutation: string, headers?: any) {
 
-    const { executeGraphql, data, hookState, loading, succeeded, error } = useGraphql(serverUrl, mutation, queryName, variables, headers);
+    const { executeGraphql, data, hookState, loading, succeeded, error } = useGraphql(serverUrl, mutation, headers);
 
     return { mutateData: executeGraphql, data, hookState, loading, succeeded, error };
 }
 
-export function useQuery(serverUrl: string, query: string, queryName: string, variables?: any, headers?: any) {
+export function useQuery(serverUrl: string, query: string, headers?: any) {
 
-    const { executeGraphql, data, hookState, loading, succeeded, error } = useGraphql(serverUrl, query, queryName, variables, headers);
+    const { executeGraphql, data, hookState, loading, succeeded, error } = useGraphql(serverUrl, query, headers);
 
-    return { queryData: executeGraphql, data, hookState, loading, succeeded, error };
+    return { query: executeGraphql, data, hookState, loading, succeeded, error };
 }
 
 export function useChatRoom({ serverUrl, roomId }: { serverUrl: string, roomId: string }) {

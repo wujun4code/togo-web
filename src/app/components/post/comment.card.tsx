@@ -1,12 +1,7 @@
 import {
     Button, Card,
     CardContent,
-    CardDescription,
     CardHeader,
-    CardTitle,
-} from "@components/index";
-import { DotsHorizontalIcon } from "@radix-ui/react-icons";
-import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
@@ -17,21 +12,14 @@ import {
     DropdownMenuSub,
     DropdownMenuSubContent,
     DropdownMenuSubTrigger,
-    DropdownMenuTrigger,
-} from "@components/index"
+    DropdownMenuTrigger
+} from "@components/index";
+import { DotsHorizontalIcon } from "@radix-ui/react-icons";
 
-import { Separator } from "@components/index"
-import { IUserContext, Post, PostCommentConnection, Edge } from '@contracts';
-import React, { FC, useState } from "react";
-import { LoadingState, useUserState } from "../../hooks";
-import {
-    ChevronDownIcon,
-    CircleIcon,
-    PlusIcon,
-    StarIcon,
-} from "@radix-ui/react-icons"
+import { AvatarSNS } from '@components/index';
+import { IUserContext, PostCommentConnection } from '@contracts';
 import { Link } from "@remix-run/react";
-import { CommentAddDialog, AvatarSNS } from '@components/index';
+import { FC } from "react";
 
 export type CommentAuthor = {
     avatar?: string;

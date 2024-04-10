@@ -74,10 +74,11 @@ export async function loader(args: LoaderFunctionArgs): Promise<TypedResponse<Po
 
     if (serverContext.user) {
         followRelation = await getFollowRelation(args, serverContext, {
-            "input": {
+            "followRelationInput": {
                 "originalSnsName": serverContext.user.togo.snsName,
                 "targetSnsName": post.authorInfo.snsName,
-            }
+            },
+            "publicProfileInput": { "snsName": post.authorInfo.snsName }
         });
     }
 

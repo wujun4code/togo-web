@@ -166,6 +166,7 @@ if (process.env.GITHUB_ENABLE === 'true') {
                     clientId: clientId
                 },
             }
+            console.log(github);
             return github;
 
         }

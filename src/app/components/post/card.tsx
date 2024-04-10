@@ -24,7 +24,7 @@ import { BiRepost } from "react-icons/bi";
 import { FaRegComment } from "react-icons/fa6";
 import { AiOutlineLike, AiOutlineDislike } from "react-icons/ai";
 import { Separator } from "@components/index"
-import { CommentAddDialog, AvatarSNS } from '@components/index';
+import { CommentAddDialog, AvatarSNS, RenderContent } from '@components/index';
 import {
   Drawer,
   DrawerClose,
@@ -46,7 +46,7 @@ import {
   PlusIcon,
   StarIcon,
 } from "@radix-ui/react-icons"
-import { Link } from "@remix-run/react";
+import { Link, useNavigate } from "@remix-run/react";
 
 export type Author = {
   following:
@@ -102,10 +102,18 @@ export const PostCard: FC<PostCardProps> = ({ id, author, content, postedAt, cur
 
   }
 
+  const navigate = useNavigate();
+
+  const handleCardContentClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    //navigate(`/post/${id}`);
+    e.preventDefault();
+    navigate(`/post/${id}`);
+  }
+
   return (
     <>
 
-      <Card onClick={e => handleCardClick(id)} className="hover:bg-gray-100">
+      <Card className="hover:bg-gray-100">
         <CardHeader className="flex flex-row gap-4 space-y-0 justify-between p-2 px-4 pt-6 pb-2">
           <AvatarSNS {...author} currentUser={user} />
           <DropdownMenu>
@@ -142,11 +150,11 @@ export const PostCard: FC<PostCardProps> = ({ id, author, content, postedAt, cur
           </DropdownMenu>
 
         </CardHeader>
-        <Link to={`/post/${id}`}>
-          <CardContent className="cursor-pointer p-2 px-4 pt-2">
-            <p>{content}</p>
-          </CardContent>
-        </Link>
+
+        <CardContent onClick={e => handleCardContentClick(e)} className="cursor-pointer p-2 px-4 pt-2">
+          {/* <p>{content}</p> */}
+          <RenderContent text={content} currentUser={user} />
+        </CardContent>
         <CardFooter className="p-2 px-4 pt-2">
           <CommentAddDialog postId={id} />
           {/* <Button className="hover:text-sky-500" variant="outline" size="icon">

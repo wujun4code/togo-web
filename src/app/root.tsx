@@ -38,7 +38,7 @@ export async function loader(args: LoaderFunctionArgs): Promise<IServerContext> 
 
 export default function App() {
   const serverData = useLoaderData<typeof loader>();
-
+  const context = new ClientContextValue(serverData);
   const { currentUser, setCurrentUser, loadingState, setLoadingState } = useUserState();
   const { dataSourceConfig, setDataSourceConfig } = useDataSource();
   const { on, off } = useTopic();

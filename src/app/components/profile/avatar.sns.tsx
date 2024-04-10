@@ -1,5 +1,5 @@
-import React, { FC, useState, useEffect } from "react";
-import { Link } from "@remix-run/react";
+import React, { FC, useState, useEffect, ReactNode } from "react";
+import { Link, useNavigate } from "@remix-run/react";
 
 import {
     Avatar,
@@ -16,6 +16,7 @@ import {
 
 import { useMutation, useDataSource, useUserState, AsyncLoaderState, useTopic, useQuery } from '@hooks';
 import { IUserContext, getGqlHeaders, SharedPublicProfile } from '@contracts';
+import { MentionLink, Mention } from '@components';
 import { GQL } from '@GQL';
 import { kFormatter } from '../../services';
 
@@ -40,6 +41,7 @@ export interface AvatarSNSProps {
 export interface SharedDetailProps extends AvatarSNSProps {
     avatar?: string;
     snsName?: string;
+    openId?: string;
     friendlyName?: string;
     follower?: any,
     following?: any;
@@ -60,10 +62,13 @@ export interface FollowButtonProps {
 }
 
 export const FollowRelationButton: FC<FollowButtonProps> = ({ currentUser, targetUser, followRelation }) => {
-    if (!followRelation) followRelation = {};
+
+    if (!followRelation) followRelation = { asFollower: undefined, asFollowee: undefined };
+
     const { asFollower, asFollowee } = followRelation;
 
-    const [isFollowing, setIsFollowing] = useState<boolean>(asFollower != undefined);
+    const [isFollowing, setIsFollowing] = useState<boolean>(asFollower != undefined && asFollower != null);
+
     const [isFollowedBy, setIsFollowedBy] = useState<boolean>(asFollowee != undefined);
     const [isMutualFollowing, setIsMutualFollowing] = useState<boolean>(isFollowing && isFollowedBy);
 
@@ -73,8 +78,8 @@ export const FollowRelationButton: FC<FollowButtonProps> = ({ currentUser, targe
     const { dataSourceConfig } = useDataSource();
 
     const { pub } = useTopic();
-    const { mutateData: followMutation, loading: followingLoading, succeeded: followed, hookState: followingHookState, data: followedData, error: followError } = useMutation(dataSourceConfig.graphql.serverUrl, GQL.FOLLOW, 'follow', null, getGqlHeaders(currentUser));
-    const { mutateData: unfollowMutation, loading: unfollowingLoading, succeeded: unfollowed, hookState: unfollowingHookState, data: unfollowedData } = useMutation(dataSourceConfig.graphql.serverUrl, GQL.UNFOLLOW, 'unfollow', null, getGqlHeaders(currentUser));
+    const { mutateData: followMutation, loading: followingLoading, succeeded: followed, hookState: followingHookState, data: followedData, error: followError } = useMutation(dataSourceConfig.graphql.serverUrl, GQL.FOLLOW, getGqlHeaders(currentUser));
+    const { mutateData: unfollowMutation, loading: unfollowingLoading, succeeded: unfollowed, hookState: unfollowingHookState, data: unfollowedData } = useMutation(dataSourceConfig.graphql.serverUrl, GQL.UNFOLLOW, getGqlHeaders(currentUser));
 
     const handleButtonClick = async () => {
         if (isFollowing) {
@@ -117,9 +122,6 @@ export const FollowRelationButton: FC<FollowButtonProps> = ({ currentUser, targe
         }
 
         if (isFollowing && unfollowed) {
-            const newUnfollowing = {
-                id: followedData.totalFollowing,
-            };
             pub('following', 'changed', -1);
             setButtonText("Unfollwed");
             setIsFollowing(false);
@@ -226,12 +228,15 @@ export const PostHeader: FC<SharedDetailProps> = (props: SharedDetailProps) => {
 }
 
 export const ProfileDetailCard: FC<SharedDetailProps> = (props: SharedDetailProps) => {
+
     const { avatar, snsName, friendlyName, follower, following, bio, followRelation, currentUser } = props;
+
     const followButtonProps = {
         currentUser,
         targetUser: { snsName: snsName },
         followRelation,
     };
+
     return (
         <div className="flex flex-col gap-4 grow">
             <div className="flex justify-between cursor-pointer">
@@ -266,56 +271,107 @@ export const ProfileDetailCard: FC<SharedDetailProps> = (props: SharedDetailProp
     );
 }
 
-export const AvatarSNS: FC<SharedDetailProps> = (props: SharedDetailProps) => {
-    const { avatar, friendlyName, snsName, currentUser, followRelation } = props;
+type HoverCardProfileDetailCardProps = {
+    children: ReactNode;
+    props: SharedDetailProps;
+}
 
+export const HoverCardProfileDetailCard: FC<HoverCardProfileDetailCardProps> = ({ props, children }) => {
+
+    const { snsName, currentUser, followRelation } = props;
+    const [detailState, setDetailState] = React.useState(props);
     const [open, setOpen] = React.useState(false);
     const [followRelationState, setFollowRelationState] = React.useState(followRelation);
+
     const { dataSourceConfig } = useDataSource();
 
-    const { queryData: followRelationQuery, loading: followRelationLoading, succeeded: followRelationSucceeded, hookState: followRelationHookState, data: followRelationData } =
-        useQuery(dataSourceConfig.graphql.serverUrl, GQL.FOLLOW_RELATION, 'followRelation', {
-            "input": {
-                "originalSnsName": currentUser?.togo.snsName,
-                "targetSnsName": snsName,
-            }
-        }, getGqlHeaders(currentUser));
+    const { query: followRelationQuery, loading: followRelationLoading, succeeded: followRelationSucceeded, hookState: followRelationHookState, data: followRelationData } =
+        useQuery(dataSourceConfig.graphql.serverUrl, GQL.FOLLOW_RELATION, getGqlHeaders(currentUser));
 
+    const { query: profileQuery, loading: profileLoading, succeeded: profileSucceeded, hookState: profileHookState, data: profileData } =
+        useQuery(dataSourceConfig.graphql.serverUrl, GQL.GET_PUBLIC_SNS_PROFILE, getGqlHeaders(currentUser));
 
     const onProfileDetailCardOpen = async (open: boolean) => {
         if (open) {
-            const data = await followRelationQuery({
-                "input": {
-                    "originalSnsName": currentUser?.togo.snsName,
-                    "targetSnsName": snsName,
-                }
-            });
-            setFollowRelationState(data);
+            if (currentUser) {
+                const data = await followRelationQuery({
+                    "followRelationInput": {
+                        "originalSnsName": currentUser?.togo.snsName,
+                        "targetSnsName": snsName,
+                    },
+                    "publicProfileInput": { "snsName": snsName }
+                });
+                if (data?.followRelation)
+                    setFollowRelationState(data.followRelation);
+                if (data?.publicProfile)
+                    setDetailState(data.publicProfile);
+            }
+            else {
+                const { publicProfile: targetProfileData } = await profileQuery({
+                    "input": { "snsName": snsName }
+                });
+                setDetailState(targetProfileData);
+            }
             setOpen(open);
         } else {
             setOpen(open);
         }
     };
+    return (<HoverCard open={open} onOpenChange={onProfileDetailCardOpen}>
+        <HoverCardTrigger asChild>
+            {children}
+        </HoverCardTrigger>
+        <HoverCardContent className="w-80" side="bottom" align="center">
+            <ProfileDetailCard {...detailState} followRelation={followRelationState} currentUser={currentUser} />
+        </HoverCardContent>
+    </HoverCard>);
+}
+
+export interface MentionLinkHoverProfileProps {
+    mention: Mention;
+    currentUser?: IUserContext;
+}
+
+export const MentionLinkHoverProfile: FC<MentionLinkHoverProfileProps> = (props: MentionLinkHoverProfileProps) => {
+
+    const { id, type, displayName } = props.mention;
+    const { currentUser } = props;
+    const snsName = type === 'usns' ? id : undefined;
+    const navigate = useNavigate();
+
+    const handleMentionLinkClick = (e: React.MouseEvent<HTMLSpanElement>) => {
+        //navigate(`/post/${id}`);
+        e.stopPropagation();
+        e.preventDefault();
+        navigate(`/${snsName}`);
+    }
+    return (<HoverCardProfileDetailCard props={{ snsName: snsName, currentUser: currentUser }}>
+        {/* <MentionLink mention={props.mention} /> */}
+        {/* <Link className='text-blue-600' to={`/${snsName}`}>@{displayName}</Link> */}
+        <span className="cursor:pointer text-blue-600" onClick={e => handleMentionLinkClick(e)}>@{displayName}</span>
+        {/* <Link className='text-blue-600' to={`/${snsName}`}>@{displayName}</Link> */}
+    </HoverCardProfileDetailCard >)
+}
+
+export const AvatarSNS: FC<SharedDetailProps> = (props: SharedDetailProps) => {
+    const { avatar, friendlyName, snsName } = props;
 
     return (
         <>
-            <HoverCard open={open} onOpenChange={onProfileDetailCardOpen}>
-                <HoverCardTrigger asChild>
-                    <div className="flex items-center space-x-4">
-                        {avatar ? (<Link to={`/${snsName}`}><Avatar>
-                            <AvatarImage src={avatar} />
-                            <AvatarFallback>{friendlyName?.length || 0 >= 2 ? friendlyName?.substring(0, 2) : friendlyName?.substring(0, 1)}</AvatarFallback>
-                        </Avatar></Link>) : (<Link to={`/${snsName}`}><Avatar><AvatarFallback>{friendlyName?.length || 0 >= 2 ? friendlyName?.substring(0, 2) : friendlyName?.substring(0, 1)}</AvatarFallback></Avatar></Link>)}
-                        <div>
-                            <p className="text-sm font-medium leading-none cursor-pointer hover:underline"><Link to={`/${snsName}`}>{friendlyName}</Link></p>
-                            <p className="text-sm text-muted-foreground cursor-pointer hover:underline"><Link to={`/${snsName}`}>@{snsName}</Link></p>
-                        </div>
+            <HoverCardProfileDetailCard props={props}>
+                <div className="flex items-center space-x-4">
+                    {avatar ? (<Link to={`/${snsName}`}><Avatar>
+                        <AvatarImage src={avatar} />
+                        <AvatarFallback>{friendlyName?.length || 0 >= 2 ? friendlyName?.substring(0, 2) : friendlyName?.substring(0, 1)}</AvatarFallback>
+                    </Avatar></Link>) : (<Link to={`/${snsName}`}><Avatar><AvatarFallback>{friendlyName?.length || 0 >= 2 ? friendlyName?.substring(0, 2) : friendlyName?.substring(0, 1)}</AvatarFallback></Avatar></Link>)}
+                    <div>
+                        <p className="text-sm font-medium leading-none cursor-pointer hover:underline"><Link to={`/${snsName}`}>{friendlyName}</Link></p>
+                        <p className="text-sm text-muted-foreground cursor-pointer hover:underline"><Link to={`/${snsName}`}>@{snsName}</Link></p>
                     </div>
-                </HoverCardTrigger>
-                <HoverCardContent className="w-80" side="bottom" align="center">
-                    <ProfileDetailCard {...props} followRelation={followRelationState} />
-                </HoverCardContent>
-            </HoverCard>
+                </div>
+            </HoverCardProfileDetailCard>
         </>
     )
 }
+
+

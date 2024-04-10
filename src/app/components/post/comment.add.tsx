@@ -32,7 +32,7 @@ export const CommentAddDialog: FC<CommentAddDialogProps> = ({ onComment, postId 
     const { currentUser, setCurrentUser, loadingState, setLoadingState } = useUserState();
     const [textareaContent, setTextareaContent] = useState('');
     const { dataSourceConfig, setDataSourceConfig } = useDataSource();
-    const { mutateData, loading, succeeded, hookState, data: addedPost } = useMutation(dataSourceConfig.graphql.serverUrl, GQL.CREATE_COMMENTS, 'createComment', null, getGqlHeaders(currentUser));
+    const { mutateData, loading, succeeded, hookState, data: addedPost } = useMutation(dataSourceConfig.graphql.serverUrl, GQL.CREATE_COMMENTS, getGqlHeaders(currentUser));
     const { pub } = useTopic();
     const [buttonText, setButtonText] = useState('Reply');
 

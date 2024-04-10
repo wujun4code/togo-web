@@ -59,6 +59,23 @@ export const GET_PUBLIC_PROFILE = `
     }
   }`;
 
+export const GET_PUBLIC_SNS_PROFILE = `
+  query PublicProfile($input: SharedPublicProfileInput!) {
+    publicProfile(input: $input) {
+      avatar
+      bio
+      follower {
+        totalCount
+      }
+      following {
+        totalCount
+      }
+      friendlyName
+      openId
+      snsName
+    }
+  }`;
+
 export const AUTHENTICATION = `
 query Authentication($input: JWTInput!) {
   authentication(input: $input) {
@@ -93,15 +110,29 @@ mutation Unfollow($input: UnfollowInput) {
   }
 }`;
 
-export const FOLLOW_RELATION =`
-query FollowRelation($input: FollowRelationInput!) {
-  followRelation(input: $input) {
+export const FOLLOW_RELATION = `
+query FollowRelation($followRelationInput: FollowRelationInput!, 
+  $publicProfileInput: SharedPublicProfileInput!) {
+  followRelation(input: $followRelationInput) {
     asFollowee {
       followedAt
     }
     asFollower {
       followedAt
     }
+  }
+  publicProfile(input: $publicProfileInput) {
+    following {
+      totalCount
+    }
+    follower {
+      totalCount
+    }
+    avatar
+    bio
+    friendlyName
+    openId
+    snsName
   }
 }
 `;
