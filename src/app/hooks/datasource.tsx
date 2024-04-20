@@ -14,7 +14,7 @@ type DataSourcesContextType = {
 
 export const DataSourceContext = createContext<DataSourcesContextType>({
     dataSourceConfig: {
-        graphql: { serverUrl: "http://localhost:4000" },
+        graphql: { serverUrl: "http://localhost:4000", subscriptionUrl: "ws://localhost:4000", },
         oauth2: { serverUrl: "" }
     },
     setDataSourceConfig: (c) => {
@@ -27,7 +27,7 @@ export const useDataSource = () => useContext(DataSourceContext);
 export const DataSourceProvider = ({ children }: { children: ReactNode }) => {
 
     const [dataSourceConfig, setDataSourceConfig] = useState<DataSourceConfig>({
-        graphql: { serverUrl: "http://localhost:4000" },
+        graphql: { serverUrl: "http://localhost:4000", subscriptionUrl: "ws://localhost:4000", },
         oauth2: { serverUrl: "" }
     });
 

@@ -10,6 +10,14 @@ export const base64DecodeAccessToken = (token: string) => {
     }
 }
 
+export const logEnv = () => {
+    if (typeof window === 'undefined') {
+        console.log('server');
+    } else {
+        console.log('client');
+    }
+};
+
 export interface OAuth2UserInterface extends OAuthUserProps {
 
     sub: string;

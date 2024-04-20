@@ -9,6 +9,7 @@ query SuggestingToMention {
               openId
               bio
               avatar
+              friendlyName
             }
           }
         }
@@ -26,3 +27,32 @@ query UnreadNotificationCount {
   }
 }
 `;
+
+export const SUBSCRIPTION_UNREAD_MENTIONED_CREATED = `
+subscription UnreadMentionedNotificationCreated {
+  unreadMentionedNotificationCreated {
+    id
+    relatedHistory {
+      mentionedFriendlyName
+      mentioner {
+        snsName
+      }
+    }
+    createdAt
+  }
+}`;
+
+export const MENTIONED_CREATED = `
+subscription MentionedCreated {
+  mentionedCreated {
+    relatedPost {
+      id
+    }
+    mentioner {
+      snsName
+      openId
+      friendlyName
+    }
+  }
+}`;
+

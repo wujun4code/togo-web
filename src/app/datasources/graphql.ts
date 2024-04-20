@@ -26,12 +26,15 @@ export const execute = async (serverUrl: string, gql: string, variables?: any, h
 
 export interface GraphQLConfig {
     serverUrl: string;
+    subscriptionUrl: string;
 }
 
 export class GraphQLDataSource {
     serverUrl: string;
+    subscriptionUrl: string;
     constructor(config: GraphQLConfig) {
         this.serverUrl = config.serverUrl;
+        this.subscriptionUrl = config.subscriptionUrl;
     }
 
     async execute(serverUrl: string, gql: string, variables?: any, headers?: any) {

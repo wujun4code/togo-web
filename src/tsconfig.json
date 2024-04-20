@@ -46,7 +46,10 @@
       "@services/server": [
         "./app/services/server"
       ],
-      "@lib":[
+      "@services": [
+        "./app/services/index"
+      ],
+      "@lib": [
         "./app/lib"
       ],
     },

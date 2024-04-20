@@ -25,9 +25,10 @@ export interface CommentAddDialogProps {
     postId: string;
     threadId?: string;
     replyToId?: string;
+    commentCount?: number;
 }
 
-export const CommentAddDialog: FC<CommentAddDialogProps> = ({ onComment, postId }) => {
+export const CommentAddDialog: FC<CommentAddDialogProps> = ({ onComment, postId, commentCount }) => {
 
     const { currentUser, setCurrentUser, loadingState, setLoadingState } = useUserState();
     const [textareaContent, setTextareaContent] = useState('');
@@ -37,7 +38,7 @@ export const CommentAddDialog: FC<CommentAddDialogProps> = ({ onComment, postId 
     const [buttonText, setButtonText] = useState('Reply');
 
     const [open, setOpen] = React.useState(false);
-
+    
     const handleButtonClick = () => {
         if (onComment) {
             onComment(textareaContent);
@@ -82,8 +83,9 @@ export const CommentAddDialog: FC<CommentAddDialogProps> = ({ onComment, postId 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button className="hover:text-sky-500" variant="outline" size="icon">
+                <Button className="flex gap-1 hover:text-sky-500" variant="outline">
                     <FaRegComment />
+                    {commentCount !== undefined && commentCount > 0 && <span>{commentCount}</span>}
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[525px]">
@@ -104,6 +106,6 @@ export const CommentAddDialog: FC<CommentAddDialogProps> = ({ onComment, postId 
                     <Button disabled={!textareaContent.trim() || loading} onClick={handleButtonClick}>{buttonText}</Button>
                 </DialogFooter>
             </DialogContent>
-        </Dialog>
+        </Dialog >
     )
 }

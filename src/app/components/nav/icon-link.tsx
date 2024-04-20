@@ -2,14 +2,14 @@ import { Link } from "@remix-run/react";
 import { LucideIcon } from "lucide-react";
 import { cn } from "@lib";
 import React, { useState, FC, useEffect } from "react";
-import { useMutation, useDataSource, useUserState, AsyncLoaderState, useTopic, useQuery } from "@hooks";
-import { getGqlHeaders } from "@contracts";
+import { useMutation, useDataSource, useUserState, AsyncLoaderState, useTopic, useQuery, useDataQuery, useSubscription } from "@hooks";
+import { getGqlHeaders, IClientContext } from "@contracts";
 import { GQL } from "@GQL";
 import {
     Home,
     User,
 } from "lucide-react";
-
+import { useOutletContext } from "@remix-run/react";
 import {
     Tooltip,
     TooltipContent,
@@ -22,7 +22,6 @@ import { VscMention } from "react-icons/vsc";
 import { FaRegComment } from "react-icons/fa";
 import { IconType } from "react-icons";
 
-import { IClientContext } from '@contracts';
 
 export type NavLinkProps = {
     title: string;
@@ -47,43 +46,78 @@ export const NavLinksPanel: FC<NavProps> = (props: NavProps) => {
         succeeded: unreadMentionedSucceeded,
         hookState: unreadMentionedHookState,
         data: unreadMentionedData
-    } = useQuery(context.dataSources.graphql.serverUrl, GQL.UNREAD_MENTIONED_NOTIFICATION_COUNT, getGqlHeaders(context.user));
+    } = useDataQuery(GQL.UNREAD_MENTIONED_NOTIFICATION_COUNT);
 
     const { currentUser, setCurrentUser, loadingState, setLoadingState } = useUserState();
 
-    //unreadMentionedCountQuery();
+    const outletContext = useOutletContext<IClientContext>();
 
     const [unreadMentionedCount, setUnreadMentionedCount] = useState<string>('');
-    const { on, off } = useTopic();
+    const [unreadCommentCount, setCommentCount] = useState<string>('');
+    const { on, off, pub } = useTopic();
 
-    // useEffect(() => {
-    //     console.log(`NavLinks`, context);
-    //     const callback = (payload: any) => {
+    const handleOnNextMentionedData = (data: any) => {
+        setUnreadMentionedCount(prev => {
+            return (prev ? parseInt(prev) + 1 : 1).toString();
+        });
+    }
 
-    //     };
+    const handleOnNextCommentData = (data: any) => {
+        setCommentCount(prev => {
+            return (prev ? parseInt(prev) + 1 : 1).toString()
+        });
+    }
 
-    //     on('mentioned_notification', 'marked_as_read', callback);
-    //     return () => {
-    //         off('mentioned_notification', 'marked_as_read', callback);
-    //     };
-    // }, [on]);
+    if (outletContext.user) {
+
+        // useSubscription(outletContext.dataSources.graphql.subscriptionUrl,
+        //     GQL.MENTIONED_CREATED,
+        //     'mentionedCreated',
+        //     null,
+        //     handleOnNextMentionedData,1
+        //     getGqlHeaders(outletContext.user));
+
+        useSubscription(outletContext.dataSources.graphql.subscriptionUrl,
+            GQL.SUBSCRIPTION_UNREAD_MENTIONED_CREATED,
+            'unreadMentionedNotificationCreated',
+            'icon-links',
+            null,
+            handleOnNextMentionedData,
+            getGqlHeaders(outletContext.user));
+
+        useSubscription(outletContext.dataSources.graphql.subscriptionUrl,
+            GQL.SUBSCRIPTION_COMMENT_CREATED,
+            'commentCreated',
+            'icon-links',
+            null,
+            handleOnNextCommentData,
+            getGqlHeaders(outletContext.user));
+    }
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 const { unreadNotification: { unreadMentioned } } = await unreadMentionedCountQuery();
-
-                //const { unreadMentioned } = unreadNotification;
                 setUnreadMentionedCount(unreadMentioned?.totalCount);
             } catch (error) {
                 console.error('Error fetching data:', error);
             }
         };
 
-        if (currentUser) {
+        if (outletContext.user) {
             fetchData();
         }
-    }, [currentUser]);
+
+        const callback = (payload: any) => {
+            setUnreadMentionedCount(prev => {
+                return (parseInt(prev) + 1).toString();
+            });
+        };
+        // on('unreadMentionedNotificationCreated', 'next', 'nav-links', callback);
+        // return () => {
+        //     off('unreadMentionedNotificationCreated', 'next', 'nav-links', callback);
+        // };
+    }, [outletContext.user, on]);
 
     const defaultLinks: NavLinkProps[] = [
         {
@@ -108,15 +142,19 @@ export const NavLinksPanel: FC<NavProps> = (props: NavProps) => {
         },
         {
             title: "Comments",
-            label: "",
+            label: unreadCommentCount,
             icon: FaRegComment,
             variant: "ghost",
             href: context.user ? `/mentioned` : '/login'
         },
     ];
+
     const links = props?.links ? props?.links : defaultLinks;
 
-    return (<NavLinks links={links} context={props.context} />)
+    return (
+        <>
+            <NavLinks links={links} context={props.context} />
+        </>)
 }
 
 export function NavLinks({ links, context }: NavProps) {
@@ -143,7 +181,7 @@ export function NavLinks({ links, context }: NavProps) {
                                             <span className="sr-only">{link.title}</span>
                                         </Link>
                                     </TooltipTrigger>
-                                    <TooltipContent side="right" className="flex gap-4 mmm">
+                                    <TooltipContent side="right" className="flex gap-4">
                                         <span> {link.title}</span>
                                         {link.label && (
                                             <span className="ml-auto text-muted-foreground">
@@ -161,7 +199,7 @@ export function NavLinks({ links, context }: NavProps) {
                                     "dark:bg-muted dark:text-white dark:hover:bg-muted dark:hover:text-white",
                                     "justify-start", "hidden lg:flex lg:gap-1"
                                 )}>
-                                <link.icon className="mr-2 h-4 w-4 ddd" />
+                                <link.icon className="h-4 w-4" />
                                 <span> {link.title}</span>
                                 {link.label && (
                                     <span

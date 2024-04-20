@@ -1,13 +1,15 @@
 import React, { useState, FC, useEffect } from "react";
 import { Textarea } from "@components/index";
 import { Button } from "@components/index";
-import { useMutation, useDataSource, useUserState, AsyncLoaderState, useTopic, useQuery } from '../../hooks';
+import { useMutation, useDataSource, useUserState, AsyncLoaderState, useTopic, useQuery, useDataGraphql, useDataQuery } from '../../hooks';
 import { GQL } from '../../contracts/graphql';
-import { getGqlHeaders, IUserContext } from '../../contracts'
+import { getGqlHeaders, IUserContext, IClientContext } from '@contracts'
 import { motion, AnimatePresence, useAnimate, useMotionValue, useAnimation } from "framer-motion"
-import { MentionsInput, Mention, MentionItem } from 'react-mentions';
+import { MentionsInput, Mention, MentionItem, SuggestionDataItem } from 'react-mentions';
 import defaultStyle from './mention/defaultStyle';
 import defaultMentionStyle from './mention/defaultMentionStyle';
+import { useOutletContext } from "@remix-run/react";
+
 interface TypingProps {
     onPost?: (content: string) => void;
     currentUser?: IUserContext
@@ -23,6 +25,7 @@ export const Typing: FC<TypingProps> = ({ onPost, currentUser: initialCurrentUse
 
     const { pub } = useTopic();
     const { mutateData, loading, succeeded, hookState, data: addedPost, error } = useMutation(dataSourceConfig.graphql.serverUrl, GQL.CREATE_POST, getGqlHeaders(currentUser));
+
     const handleButtonClick = () => {
 
         if (!currentUser) {
@@ -46,7 +49,95 @@ export const Typing: FC<TypingProps> = ({ onPost, currentUser: initialCurrentUse
     const x = useMotionValue(0)
     const controls = useAnimation();
 
+    const context = useOutletContext<IClientContext>();
+
+
+
+    // const suggestedMentions = [
+    //     {
+    //         id: 'walter',
+    //         display: '@Walter White',
+    //     },
+    //     {
+    //         id: 'pipilu',
+    //         display: '@皮皮鲁',
+    //     },
+    //     {
+    //         id: 'luxixi',
+    //         display: '@鲁西西',
+    //     },
+    //     {
+    //         id: 'satoshi1',
+    //         display: '@中本聪',
+    //     },
+    //     {
+    //         id: 'satoshi2',
+    //         display: '@サトシ・ナカモト',
+    //     },
+    //     {
+    //         id: 'nobi',
+    //         display: '@野比のび太',
+    //     },
+    //     {
+    //         id: 'sung',
+    //         display: '@성덕선',
+    //     },
+    //     {
+    //         id: 'jesse',
+    //         display: '@Jesse Pinkman',
+    //     },
+    //     {
+    //         id: 'gus',
+    //         display: '@Gustavo "Gus" Fring',
+    //     },
+    //     {
+    //         id: 'saul',
+    //         display: '@Saul Goodman',
+    //     },
+    //     {
+    //         id: 'hank',
+    //         display: '@Hank Schrader',
+    //     },
+    //     {
+    //         id: 'skyler',
+    //         display: '@Skyler White',
+    //     },
+    //     {
+    //         id: 'mike',
+    //         display: '@Mike Ehrmantraut',
+    //     },
+    //     {
+    //         id: '@lydia',
+    //         display: '@Lydìã Rôdarté-Qüayle',
+    //     },
+    // ];
+
+    const {
+        query: suggestingToMentionQuery,
+        loading: suggestingToMentionLoading,
+        succeeded: suggestingToMentionSucceeded,
+        hookState: suggestingToMentionHookState,
+        data: suggestingToMentionData
+    } = useDataQuery(GQL.SUGGESTING_TO_MENTION);
+
+    const [suggestedMentions, setSuggestedMentions] = useState<SuggestionDataItem[]>([]);
+
     useEffect(() => {
+
+        const fetchSuggestingToMentionQuery = async () => {
+            try {
+                const { suggestingToMention: { asMentioner: { edges } } } = await suggestingToMentionQuery();
+
+                const suggestedMentionsData: SuggestionDataItem[] = edges.map((edge: any, index: number) => {
+                    const { node: { mentioned } } = edge;
+
+                    return { id: mentioned.snsName, display: `@${mentioned.friendlyName}` };
+                });
+                setSuggestedMentions(suggestedMentionsData);
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        };
 
         if (loading) {
             setButtonText("Sending...");
@@ -74,7 +165,12 @@ export const Typing: FC<TypingProps> = ({ onPost, currentUser: initialCurrentUse
                 setButtonColor("primary");
             }, 600);
         }
-    }, [hookState]);
+
+
+        if (context.user) {
+            fetchSuggestingToMentionQuery();
+        }
+    }, [hookState, context.user]);
 
 
     const handleTextareaChange = (content: string) => {
@@ -83,72 +179,6 @@ export const Typing: FC<TypingProps> = ({ onPost, currentUser: initialCurrentUse
 
     const [mentions, setMentions] = useState('');
 
-    const {
-        query: suggestingToMentionQuery,
-        loading: suggestingToMentionLoading,
-        succeeded: suggestingToMentionSucceeded,
-        hookState: suggestingToMentionHookState,
-        data: suggestingToMentionData
-    } = useQuery(dataSourceConfig.graphql.serverUrl, GQL.SUGGESTING_TO_MENTION, getGqlHeaders(currentUser));
-
-    const suggestedMentions = [
-        {
-            id: 'walter',
-            display: '@Walter White',
-        },
-        {
-            id: 'pipilu',
-            display: '@皮皮鲁',
-        },
-        {
-            id: 'luxixi',
-            display: '@鲁西西',
-        },
-        {
-            id: 'satoshi1',
-            display: '@中本聪',
-        },
-        {
-            id: 'satoshi2',
-            display: '@サトシ・ナカモト',
-        },
-        {
-            id: 'nobi',
-            display: '@野比のび太',
-        },
-        {
-            id: 'sung',
-            display: '@성덕선',
-        },
-        {
-            id: 'jesse',
-            display: '@Jesse Pinkman',
-        },
-        {
-            id: 'gus',
-            display: '@Gustavo "Gus" Fring',
-        },
-        {
-            id: 'saul',
-            display: '@Saul Goodman',
-        },
-        {
-            id: 'hank',
-            display: '@Hank Schrader',
-        },
-        {
-            id: 'skyler',
-            display: '@Skyler White',
-        },
-        {
-            id: 'mike',
-            display: '@Mike Ehrmantraut',
-        },
-        {
-            id: '@lydia',
-            display: '@Lydìã Rôdarté-Qüayle',
-        },
-    ];
     const onChange = (event: { target: { value: string } },
         newValue: string,
         newPlainTextValue: string,
@@ -159,7 +189,6 @@ export const Typing: FC<TypingProps> = ({ onPost, currentUser: initialCurrentUse
     }
 
     const onAdd = (id: string | number, display: string) => {
-        console.log('onAdd', id, display);
     };
 
     return (

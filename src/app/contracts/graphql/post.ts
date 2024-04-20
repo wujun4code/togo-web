@@ -58,6 +58,11 @@ query Timeline($input: BaseQueryInput) {
           content
           id
           postedAt
+          aggregatedInfo {
+            comment {
+              totalCount
+            }
+          }          
         }
       }
       pageInfo {
@@ -129,3 +134,18 @@ mutation CreateComment($input: CreateCommentInput!) {
   }
 }
 `;
+
+export const SUBSCRIPTION_COMMENT_CREATED = `
+subscription CommentCreated {
+  commentCreated {
+    content
+    createdAt
+    id
+    updatedAt
+    post {
+      content
+      id
+      postedAt
+    }
+  }
+}`;

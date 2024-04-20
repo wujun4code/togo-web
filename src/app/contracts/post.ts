@@ -16,18 +16,28 @@ export interface AuthorInfo {
     };
 }
 
+export interface PostCommentAggregatedInfo {
+    totalCount: number;
+}
+
+export interface PostAggregatedInfo {
+    comment?: PostCommentAggregatedInfo
+}
+
 export interface Post {
     authorInfo: AuthorInfo;
     content: string;
     id: string;
-    postedAt: string; // Consider using a Date type if needed
+    postedAt: string;
+
+    aggregatedInfo?: PostAggregatedInfo;
 }
 
 export interface Comment {
     authorInfo: AuthorInfo;
     content: string;
     id: string;
-    createdAt: string; // Consider using a Date type if needed
+    createdAt: string;
     updatedAt: string;
 }
 

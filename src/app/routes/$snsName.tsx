@@ -8,10 +8,12 @@ import { AuthenticatedUser, authenticator } from "../services/server/auth";
 import { syncMyProfile, getPublicProfile } from '../services/server/user';
 import { getFollowRelation } from '@services/server';
 
-import { Button, ProfileHeader, FollowRelationButton } from "@components";
+import { Button, ProfileHeader, FollowRelationButton, ProfileForm, RobotListView } from "@components";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@components/index";
 import { Form } from '@remix-run/react';
+import { useEffect } from "react";
+
 
 export const links: LinksFunction = () => [
   {
@@ -82,7 +84,6 @@ export async function loader(args: LoaderFunctionArgs): Promise<TypedResponse<Pr
   }
 
   const data = json({ currentUser: serverContext.user, basic: targetUser, followRelation: followRelationData ? followRelationData.followRelation : null });
-
   return data;
 }
 
@@ -103,13 +104,17 @@ export default function Screen() {
               <ProfileHeader {...basic} followRelation={followRelation} currentUser={currentUser} />
             </div>
 
-            <Tabs defaultValue="posts" className="w-[400px]">
+            <Tabs key={basic?.snsName} defaultValue="posts" className="">
               <TabsList>
                 <TabsTrigger value="posts">Posts</TabsTrigger>
                 <TabsTrigger value="likes">Likes</TabsTrigger>
+                <TabsTrigger value="robots">Robots</TabsTrigger>
               </TabsList>
               <TabsContent value="posts">Make changes to your account here.</TabsContent>
               <TabsContent value="likes">Change your password here.</TabsContent>
+              <TabsContent value="robots">
+                {basic?.snsName && <RobotListView input={{ managingUserSnsName: basic.snsName }} />}
+              </TabsContent>
             </Tabs>
           </div>
           {/* <Form action="/auth/logout" method="post">

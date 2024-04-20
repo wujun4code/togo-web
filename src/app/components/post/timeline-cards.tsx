@@ -1,9 +1,11 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { FC, useEffect, useState } from "react";
 import { IUserContext, Post, PostConnection, Edge } from '../../contracts';
-import { useCharactersContext, useTopic } from "../../hooks";
 import { PostCard, PostCardProps } from './card';
-
+import { useOutletContext } from "@remix-run/react";
+import { getGqlHeaders, IClientContext } from "@contracts";
+import { useMutation, useDataSource, useUserState, AsyncLoaderState, useTopic, useQuery, useDataQuery, useSubscription } from "@hooks";
+import { GQL } from "@GQL";
 
 interface TimelineProps {
   load?: () => Promise<PostCardProps[]>;
@@ -42,6 +44,7 @@ export const TimelineCards: FC<TimelineProps> = ({ load, serverUrlX, data, curre
         snsName: currentUser?.togo.snsName || "",
         friendlyName: currentUser?.togo.friendlyName || "",
       },
+      aggregatedInfo: p.aggregatedInfo
     };
   }
 
@@ -69,6 +72,7 @@ export const TimelineCards: FC<TimelineProps> = ({ load, serverUrlX, data, curre
         snsName: authorInfo.snsName,
         friendlyName: authorInfo.friendlyName,
       },
+      aggregatedInfo: post.aggregatedInfo,
       currentUser: currentUser
     };
   }
@@ -77,8 +81,24 @@ export const TimelineCards: FC<TimelineProps> = ({ load, serverUrlX, data, curre
   const [currentUser] = useState(initialCurrentUser);
 
   const [cards, setCards] = useState(posts ? posts.edges.map(e => mapToCardProps(e.node)) : []);
-
   const { on, off } = useTopic();
+
+  const outletContext = useOutletContext<IClientContext>();
+
+  const handleOnComingCommentData = (data: any) => {
+    console.log('handleOnComingCommentData', data);
+  }
+
+  if (outletContext.user) {
+
+    // useSubscription(outletContext.dataSources.graphql.subscriptionUrl,
+    //   GQL.SUBSCRIPTION_COMMENT_CREATED,
+    //   'commentCreated',
+    //   null,
+    //   handleOnComingCommentData,
+    //   getGqlHeaders(outletContext.user));
+  }
+
   useEffect(() => {
     const callback = (payload: any) => {
       const newPost = mapToNewPost(payload);
@@ -86,11 +106,10 @@ export const TimelineCards: FC<TimelineProps> = ({ load, serverUrlX, data, curre
       setCards(prev => {
         return [newCard, ...prev];
       });
-
     };
-    on('post', 'created', callback);
+    on('post', 'created', 'new-post', callback);
     return () => {
-      off('post', 'created', callback);
+      off('post', 'created', 'new-post', callback);
     };
   }, [on]);
 

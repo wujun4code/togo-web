@@ -11,12 +11,13 @@ import {
 } from "@remix-run/react";
 import styles from "./tailwind.css";
 import { authenticator } from "./services/server/auth";
-import { ClientContextValue, LoaderContext, ServerContextValue, IClientContext, IUserContext, IServerContext } from './contracts';
+import { ClientContextValue, LoaderContext, ServerContextValue, IClientContext, IUserContext, IServerContext, getGqlHeaders } from '@contracts';
 import { syncMyProfile } from './services/server';
-import { useUserState, UserProvider, useDataSource, LoadingState, useTopic } from '@hooks';
+import { useUserState, UserProvider, useDataSource, LoadingState, useTopic, useWebSocket, useSubscription } from '@hooks';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useLoaderData } from "@remix-run/react";
 import { useNavigate } from 'react-router-dom';
+import { GQL } from "@GQL";
 
 export const links: LinksFunction = () => [
   ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] :
@@ -42,7 +43,9 @@ export default function App() {
   const { currentUser, setCurrentUser, loadingState, setLoadingState } = useUserState();
   const { dataSourceConfig, setDataSourceConfig } = useDataSource();
   const { on, off } = useTopic();
+
   const navigate = useNavigate();
+
   useEffect(() => {
     if (serverData.user) {
       setCurrentUser(serverData.user);
@@ -54,9 +57,9 @@ export default function App() {
     const onRequiredLogIn = (payload: any) => {
       return navigate("/login");
     };
-    on('require', 'login', onRequiredLogIn);
+    on('require', 'login', 'root', onRequiredLogIn);
     return () => {
-      off('require', 'login', onRequiredLogIn);
+      off('require', 'login', 'root', onRequiredLogIn);
     };
 
   }, []);
@@ -69,7 +72,7 @@ export default function App() {
         <Links />
       </head>
       <body>
-        <Outlet />
+        <Outlet context={context} />
         <ScrollRestoration />
         <Scripts />
         <LiveReload />

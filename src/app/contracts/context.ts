@@ -86,7 +86,7 @@ export class ServerContextValue implements IServerContext {
     constructor() {
         this.dataSourceConfig = {
             oauth2: { serverUrl: process.env.OAUTH2_SERVER ? process.env.OAUTH2_SERVER : "" },
-            graphql: { serverUrl: process.env.GRAPHQL_SERVER ? process.env.GRAPHQL_SERVER : "" },
+            graphql: { serverUrl: process.env.GRAPHQL_SERVER ? process.env.GRAPHQL_SERVER : "", subscriptionUrl: process.env.GRAPHQL_SUBSCRIPTION_URL ? process.env.GRAPHQL_SUBSCRIPTION_URL : "" },
         };
         this.node_env = process.env.NODE_ENV;
         this.togo = {

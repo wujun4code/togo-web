@@ -151,10 +151,10 @@ export const ProfileHeader: FC<SharedDetailProps> = (props: SharedDetailProps) =
         const callback = (payload: any) => {
             setFollowerCount(prevCount => prevCount + payload);
         };
-        on('following', 'changed', callback);
+        on('following', 'changed', 'ProfileHeader', callback);
         //on('following', 'deleted', callback);
         return () => {
-            off('following', 'changed', callback);
+            off('following', 'changed', 'ProfileHeader', callback);
             //off('following', 'deleted', callback);
         };
     }, [on]);
@@ -371,7 +371,7 @@ export const AvatarSNS: FC<SharedDetailProps> = (props: SharedDetailProps) => {
                 </div>
             </HoverCardProfileDetailCard>
         </>
-    )
+    );
 }
 
 

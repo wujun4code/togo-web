@@ -39,7 +39,6 @@ import {
 
 import React, { FC, useState } from "react";
 import { IUserContext } from '../../contracts/context';
-import { LoadingState, useUserState } from "../../hooks";
 import {
   ChevronDownIcon,
   CircleIcon,
@@ -47,6 +46,10 @@ import {
   StarIcon,
 } from "@radix-ui/react-icons"
 import { Link, useNavigate } from "@remix-run/react";
+import { useOutletContext } from "@remix-run/react";
+import { getGqlHeaders, IClientContext } from "@contracts";
+import { useMutation, useDataSource, useUserState, AsyncLoaderState, useTopic, useQuery, useDataQuery, useSubscription } from "@hooks";
+import { GQL } from "@GQL";
 
 export type Author = {
   following:
@@ -72,14 +75,18 @@ export interface PostCardProps {
   author: Author;
   id: string;
   currentUser?: IUserContext
+  aggregatedInfo?: any;
 }
 
-export const PostCard: FC<PostCardProps> = ({ id, author, content, postedAt, currentUser: initialCurrentUser }) => {
+export const PostCard: FC<PostCardProps> = ({ id, author, content, postedAt, currentUser: initialCurrentUser, aggregatedInfo }) => {
 
   const [isFollowed, setIsFollowed] = React.useState(author.followed ? author.followed : false);
   const [user, setUser] = useState(initialCurrentUser);
   const { currentUser, setCurrentUser, loadingState, setLoadingState } = useUserState();
   const currentUserOpenId = '';
+
+  const [commentCount, setCommentCount] = React.useState<number>(aggregatedInfo?.comment?.totalCount ? aggregatedInfo?.comment?.totalCount : 0);
+
 
   const [isHideFollow, setIsHideFollow] = React.useState(currentUserOpenId === author.openId);
 
@@ -108,6 +115,28 @@ export const PostCard: FC<PostCardProps> = ({ id, author, content, postedAt, cur
     //navigate(`/post/${id}`);
     e.preventDefault();
     navigate(`/post/${id}`);
+  }
+  const outletContext = useOutletContext<IClientContext>();
+
+  const handleOnComingCommentData = (data: any) => {
+    console.log('card', 'handleOnComingCommentData', data);
+    const { id: nextPostId } = data.post;
+    console.log('nextPostId', nextPostId, id);
+    if (nextPostId === id.toString()) {
+      console.log('nextPostId', nextPostId, id.toString());
+      setCommentCount(prev => prev + 1);
+    }
+  }
+
+  if (outletContext.user) {
+
+    useSubscription(outletContext.dataSources.graphql.subscriptionUrl,
+      GQL.SUBSCRIPTION_COMMENT_CREATED,
+      'commentCreated',
+      `post-card-${id}`,
+      null,
+      handleOnComingCommentData,
+      getGqlHeaders(outletContext.user));
   }
 
   return (
@@ -156,7 +185,7 @@ export const PostCard: FC<PostCardProps> = ({ id, author, content, postedAt, cur
           <RenderContent text={content} currentUser={user} />
         </CardContent>
         <CardFooter className="p-2 px-4 pt-2">
-          <CommentAddDialog postId={id} />
+          <CommentAddDialog postId={id} commentCount={commentCount} />
           {/* <Button className="hover:text-sky-500" variant="outline" size="icon">
             <FaRegComment />
           </Button> */}
