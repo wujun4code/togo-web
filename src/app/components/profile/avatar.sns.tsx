@@ -237,19 +237,36 @@ export const ProfileDetailCard: FC<SharedDetailProps> = (props: SharedDetailProp
         followRelation,
     };
 
+    const navigate = useNavigate();
+
+    const handleMentionLinkClick = (e: React.MouseEvent<HTMLDivElement>) => {
+        //navigate(`/post/${id}`);
+        e.stopPropagation();
+        e.preventDefault();
+        navigate(`/${snsName}`);
+    }
+
     return (
         <div className="flex flex-col gap-4 grow">
             <div className="flex justify-between cursor-pointer">
-                <div className="flex items-center justify-center hover:bg-gray-100">
-                    {avatar ? (<Link to={`/${snsName}`}><Avatar className="w-20 h-20 rounded-full overflow-hidden ">
-                        <AvatarImage src={avatar} />
-                        <AvatarFallback>{friendlyName?.length || 0 >= 2 ? friendlyName?.substring(0, 2) : friendlyName?.substring(0, 1)}</AvatarFallback>
-                    </Avatar></Link>) : (<Link to={`/${snsName}`}><Avatar><AvatarFallback>{friendlyName?.length || 0 >= 2 ? friendlyName?.substring(0, 2) : friendlyName?.substring(0, 1)}</AvatarFallback></Avatar></Link>)}
+                <div onClick={handleMentionLinkClick} className="flex items-center justify-center hover:bg-gray-100">
+                    {avatar ? (
+                        <Link to={`/${snsName}`}>
+                            <Avatar className="w-20 h-20 rounded-full overflow-hidden ">
+                                <AvatarImage src={avatar} />
+                                <AvatarFallback>{friendlyName?.length || 0 >= 2 ? friendlyName?.substring(0, 2) : friendlyName?.substring(0, 1)}</AvatarFallback>
+                            </Avatar>
+                        </Link>) : (
+                        <Link to={`/${snsName}`}>
+                            <Avatar>
+                                <AvatarFallback>{friendlyName?.length || 0 >= 2 ? friendlyName?.substring(0, 2) : friendlyName?.substring(0, 1)}</AvatarFallback>
+                            </Avatar>
+                        </Link>)}
                 </div>
                 <FollowRelationButton {...followButtonProps} />
             </div>
             <div className="flex items-center">
-                <div>
+                <div onClick={handleMentionLinkClick}>
                     <p className="text-sm font-medium leading-none cursor-pointer hover:underline"><Link to={`/${snsName}`}>{friendlyName}</Link></p>
                     <p className="text-sm text-muted-foreground  cursor-pointer hover:underline"><Link to={`/${snsName}`}>@{snsName}</Link></p>
                 </div>
@@ -345,6 +362,7 @@ export const MentionLinkHoverProfile: FC<MentionLinkHoverProfileProps> = (props:
         e.preventDefault();
         navigate(`/${snsName}`);
     }
+
     return (<HoverCardProfileDetailCard props={{ snsName: snsName, currentUser: currentUser }}>
         {/* <MentionLink mention={props.mention} /> */}
         {/* <Link className='text-blue-600' to={`/${snsName}`}>@{displayName}</Link> */}

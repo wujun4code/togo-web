@@ -199,7 +199,6 @@ export function useSubscription(
                     subscriptionsRef.current.set(subscribedKey, true);
                 }
                 if (onNextData) {
-                    console.log('notificationKey', notificationKey);
                     on(subscribedKey, 'next', notificationKey ? notificationKey : subscribedKey, onNextData);
                 }
             }

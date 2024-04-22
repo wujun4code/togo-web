@@ -32,6 +32,7 @@ export const RobotAvatarCardList: FC<RobotAvatarListCardProps> = ({ robotConnect
     const mapToCardProps = (robot: Robot): RobotAvatarCardProps => {
         return { robot };
     }
+    
     const [cards, setCards] = useState(robots ? robots.edges.map(e => mapToCardProps(e.node)) : []);
     return (
         <>

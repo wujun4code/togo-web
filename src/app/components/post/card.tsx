@@ -119,11 +119,9 @@ export const PostCard: FC<PostCardProps> = ({ id, author, content, postedAt, cur
   const outletContext = useOutletContext<IClientContext>();
 
   const handleOnComingCommentData = (data: any) => {
-    console.log('card', 'handleOnComingCommentData', data);
+    
     const { id: nextPostId } = data.post;
-    console.log('nextPostId', nextPostId, id);
     if (nextPostId === id.toString()) {
-      console.log('nextPostId', nextPostId, id.toString());
       setCommentCount(prev => prev + 1);
     }
   }
