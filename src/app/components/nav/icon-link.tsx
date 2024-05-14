@@ -98,7 +98,7 @@ export const NavLinksPanel: FC<NavProps> = (props: NavProps) => {
         const fetchData = async () => {
             try {
                 const { unreadNotification: { unreadMentioned } } = await unreadMentionedCountQuery();
-                setUnreadMentionedCount(unreadMentioned?.totalCount);
+                setUnreadMentionedCount(unreadMentioned?.totalCount>0?unreadMentioned?.totalCount:'');
             } catch (error) {
                 console.error('Error fetching data:', error);
             }
