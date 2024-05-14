@@ -60,14 +60,10 @@ export const TopicProvider = ({ children }: { children: ReactNode }) => {
     }, []);
 
     const off = (topic: string, event: string, id: string, callback: (message: any) => void) => {
-
-        const callbackId = id + '-' + callback.toString();
-        if (callbacksRef.current.has(callbackId)) {
-            const { topic, event } = callbacksRef.current.get(callbackId)!;
-            if (subscriptionsRef.current[topic] && subscriptionsRef.current[topic][event]) {
-                subscriptionsRef.current[topic][event] = subscriptionsRef.current[topic][event].filter(cb => cb !== callback);
-            }
-            callbacksRef.current.delete(callbackId);
+        if (subscriptionMapRef.current[topic]
+            && subscriptionMapRef.current[topic][event]
+            && subscriptionMapRef.current[topic][event][id]) {
+            subscriptionMapRef.current[topic][event][id] = subscriptionMapRef.current[topic][event][id].filter(cb => cb.toString() !== callback.toString());
         }
     };
 

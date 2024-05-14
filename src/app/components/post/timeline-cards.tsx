@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { FC, useEffect, useState } from "react";
 import { IUserContext, Post, PostConnection, Edge } from '../../contracts';
-import { PostCard, PostCardProps } from './card';
+import { PostCard, PostCardProps } from './post.list.item.card';
 import { useOutletContext } from "@remix-run/react";
 import { getGqlHeaders, IClientContext } from "@contracts";
 import { useMutation, useDataSource, useUserState, AsyncLoaderState, useTopic, useQuery, useDataQuery, useSubscription } from "@hooks";

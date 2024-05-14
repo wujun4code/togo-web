@@ -146,7 +146,7 @@ export const CommentItemCard: FC<CommentProps> = ({ postId, id, author, content,
                 </CardHeader>
                 <Link to={`/post/${postId}/comments/${id}`}>
                     <CardContent>
-                        {content}
+                        <p>{content}</p>
                     </CardContent>
                 </Link>
             </Card>

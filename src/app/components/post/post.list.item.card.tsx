@@ -5,8 +5,9 @@ import {
   CardHeader,
   CardTitle,
   CardFooter,
-} from "@components/index";
+} from "@components";
 import { DotsHorizontalIcon } from "@radix-ui/react-icons";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,12 +20,13 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@components/index"
+} from "@components";
+
 import { BiRepost } from "react-icons/bi";
 import { FaRegComment } from "react-icons/fa6";
 import { AiOutlineLike, AiOutlineDislike } from "react-icons/ai";
-import { Separator } from "@components/index"
-import { CommentAddDialog, AvatarSNS, RenderContent } from '@components/index';
+import { Separator } from "@components";
+import { CommentAddDialog, AvatarSNS, RenderContent } from '@components';
 import {
   Drawer,
   DrawerClose,
@@ -110,7 +112,23 @@ export const PostCard: FC<PostCardProps> = ({ id, author, content, postedAt, cur
   }
 
   const navigate = useNavigate();
-
+  const [startX, setStartX] = useState(0);
+  const [startY, setStartY] = useState(0);
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    setStartX(e.clientX);
+    setStartY(e.clientY);
+  };
+  const handleMouseUp = (e: React.MouseEvent<HTMLDivElement>) => {
+    const endX = e.clientX;
+    const endY = e.clientY;
+    const distance = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
+    if (distance < 10) {
+      e.preventDefault();
+      navigate(`/post/${id}`);
+    } else {
+      console.log('Text Selected');
+    }
+  };
   const handleCardContentClick = (e: React.MouseEvent<HTMLDivElement>) => {
     //navigate(`/post/${id}`);
     e.preventDefault();
@@ -119,7 +137,7 @@ export const PostCard: FC<PostCardProps> = ({ id, author, content, postedAt, cur
   const outletContext = useOutletContext<IClientContext>();
 
   const handleOnComingCommentData = (data: any) => {
-    
+
     const { id: nextPostId } = data.post;
     if (nextPostId === id.toString()) {
       setCommentCount(prev => prev + 1);
@@ -127,7 +145,6 @@ export const PostCard: FC<PostCardProps> = ({ id, author, content, postedAt, cur
   }
 
   if (outletContext.user) {
-
     useSubscription(outletContext.dataSources.graphql.subscriptionUrl,
       GQL.SUBSCRIPTION_COMMENT_CREATED,
       'commentCreated',
@@ -178,7 +195,11 @@ export const PostCard: FC<PostCardProps> = ({ id, author, content, postedAt, cur
 
         </CardHeader>
 
-        <CardContent onClick={e => handleCardContentClick(e)} className="cursor-pointer p-2 px-4 pt-2">
+        <CardContent
+          //onClick={e => handleCardContentClick(e)} 
+          onMouseDown={handleMouseDown}
+          onMouseUp={handleMouseUp}
+          className="cursor-pointer p-2 px-4 pt-2">
           {/* <p>{content}</p> */}
           <RenderContent text={content} currentUser={user} />
         </CardContent>

@@ -37,7 +37,7 @@ import {
 } from "@components/ui/drawer";
 
 
-import React, { FC, useState } from "react";
+import React, { FC, useState, ReactNode } from "react";
 import { IUserContext, AvatarProfile } from '@contracts';
 import { LoadingState, useUserState } from "../../hooks";
 import {
@@ -51,9 +51,11 @@ import { Link, useNavigate } from "@remix-run/react";
 export interface AvatarProfileCardProps {
     targetUser: AvatarProfile;
     currentUser?: IUserContext
+
+    actionMenu?: ReactNode;
 }
 
-export const AvatarProfileCard: FC<AvatarProfileCardProps> = ({ targetUser, currentUser: initialCurrentUser }) => {
+export const AvatarProfileCard: FC<AvatarProfileCardProps> = ({ targetUser, currentUser: initialCurrentUser, actionMenu }) => {
 
     const [isFollowed, setIsFollowed] = React.useState(targetUser.followed ? targetUser.followed : false);
     const [user, setUser] = useState(initialCurrentUser);
@@ -74,17 +76,20 @@ export const AvatarProfileCard: FC<AvatarProfileCardProps> = ({ targetUser, curr
     }
 
     return (
-        <>
-            <Card className="hover:bg-gray-100">
-                <CardHeader className="flex flex-row gap-4 space-y-0 justify-between p-2 px-4 pt-6 pb-2">
-                    <AvatarSNS {...targetUser} currentUser={user} />
-                </CardHeader>
-                <CardContent onClick={e => handleCardContentClick(e)} className="cursor-pointer p-2 px-4 pt-2">
-                    {targetUser.bio}
-                </CardContent>
-                <CardFooter className="p-2 px-4 pt-2">
-                </CardFooter>
-            </Card>
-        </>
+        <Card className="hover:bg-gray-100">
+            <CardHeader className="flex flex-row justify-between gap-4 space-y-0 p-2 px-4 pt-6 pb-2">
+                <AvatarSNS {...targetUser} currentUser={user} />
+                {actionMenu && (
+                    <>
+                        {actionMenu}
+                    </>
+                )}
+            </CardHeader>
+            <CardContent onClick={e => handleCardContentClick(e)} className="cursor-pointer p-2 px-4 pt-2">
+                {targetUser.bio}
+            </CardContent>
+            <CardFooter className="p-2 px-4 pt-2">
+            </CardFooter>
+        </Card>
     );
 }

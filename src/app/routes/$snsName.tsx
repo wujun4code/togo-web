@@ -101,7 +101,7 @@ export default function Screen() {
           <div className="flex w-full flex-col gap-4">
 
             <div className="flex gap-2 items-center">
-              <ProfileHeader {...basic} followRelation={followRelation} currentUser={currentUser} />
+              <ProfileHeader key={basic?.snsName} {...basic} followRelation={followRelation} currentUser={currentUser} />
             </div>
 
             <Tabs key={basic?.snsName} defaultValue="posts" className="">
