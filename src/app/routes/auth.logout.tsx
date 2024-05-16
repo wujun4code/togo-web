@@ -5,5 +5,5 @@ import { Form, useLoaderData } from "@remix-run/react";
 import { authenticator } from "../services/server/auth";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-    await authenticator.logout(request, { redirectTo: "/" });
+    return await authenticator.logout(request, { redirectTo: "/login" });
 };

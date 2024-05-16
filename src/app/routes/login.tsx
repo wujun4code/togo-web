@@ -1,5 +1,6 @@
-import { Button} from "@components/index";
-import type { LinksFunction, LoaderFunctionArgs, MetaFunction, ActionFunctionArgs } from "@remix-run/node";
+import { Button } from "@components/index";
+import type { LinksFunction, LoaderFunctionArgs, MetaFunction, ActionFunctionArgs, TypedResponse } from "@remix-run/node";
+import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ClientLoaderFunctionArgs } from "@remix-run/react";
@@ -15,12 +16,27 @@ export const links: LinksFunction = () => [
     }
 ];
 
-export async function loader(args: LoaderFunctionArgs): Promise<any> {
+interface LogInContext {
+    google: boolean;
+    github: boolean;
+    keycloak: boolean;
+}
+
+export async function loader(args: LoaderFunctionArgs): Promise<TypedResponse<LogInContext>> {
     const { request } = args;
-    return {};
+
+
+    const data = json({
+        google: process.env.GOOGLE_ENABLE === 'true',
+        github: process.env.GITHUB_ENABLE === 'true',
+        keycloak: false,
+    });
+
+    return data;
 }
 
 export default function Screen() {
+    const { google, github, keycloak } = useLoaderData<typeof loader>();
     return (
         <>
             <div className="flex justify-center items-center h-screen bg-blue-950">
@@ -30,17 +46,22 @@ export default function Screen() {
                         alt="Towa Logo"
                         src="/logo-blue.svg"
                     />
+                    
                     <p className="text-2xl"> Welcome </p>
                     <p> Log in to ToGo to continue.</p>
-                    <Form action="/auth/google" method="post">
+
+                    {google && <Form action="/auth/google" method="post">
                         <Button className="w-44" type="submit">Login with Google</Button>
-                    </Form>
-                    <Form action="/auth/github" method="post">
+                    </Form>}
+
+                    {github && <Form action="/auth/github" method="post">
                         <Button className="w-44" type="submit">Login with GitHub</Button>
-                    </Form>
-                    <Form action="/auth/keycloak" method="post">
+                    </Form>}
+
+                    {keycloak && <Form action="/auth/keycloak" method="post">
                         <Button className="w-44" type="submit">Login with Keycloak</Button>
-                    </Form>
+                    </Form>}
+
                 </div>
             </div>
         </>
