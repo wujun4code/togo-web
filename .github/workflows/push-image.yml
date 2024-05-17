@@ -33,7 +33,7 @@ jobs:
     - name: Build and push image to docker hub
       uses: docker/build-push-action@v5
       with:
-        context: "."
+        context: "./src"
         push: true
         tags: ${{ secrets.DOCKERHUB_USERNAME }}/togo-web:${{ env.branch }}-${{github.run_number}}-${{ env.sha_short }}
-        file: ./Dockerfile
+        file: ./src/Dockerfile
