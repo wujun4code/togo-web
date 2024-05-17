@@ -1,5 +1,5 @@
 {
-  "name": "a remix app",
+  "name": "togo web",
   "private": true,
   "sideEffects": false,
   "type": "module",
@@ -68,6 +68,6 @@
     "typescript": "^5.1.6"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   }
 }
