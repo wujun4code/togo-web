@@ -1,17 +1,22 @@
-# path: ./Dockerfile
-FROM node:20-alpine
-ARG NODE_ENV=development
-ENV NODE_ENV=${NODE_ENV}
-
-WORKDIR /opt/
-COPY package.json package-lock.json ./
-ENV PATH /opt/node_modules/.bin:$PATH
-
-WORKDIR /opt/app
-COPY . .
-RUN chown -R node:node /opt/app
-USER node
+FROM node:20-alpine as base
+FROM base as deps
+WORKDIR /app
+COPY package*.json ./
 RUN npm install
+FROM deps AS builder
+WORKDIR /app
+COPY . .
 RUN npm run build
-EXPOSE 3000
-CMD ["npm", "start"]
+FROM deps AS prod-deps
+WORKDIR /app
+RUN npm install --production
+FROM base as runner
+WORKDIR /app
+RUN addgroup --system --gid 1001 remix
+RUN adduser --system --uid 1001 remix
+USER remix
+COPY --from=prod-deps --chown=remix:remix /app/package*.json ./
+COPY --from=prod-deps --chown=remix:remix /app/node_modules ./node_modules
+COPY --from=builder --chown=remix:remix /app/build ./build
+COPY --from=builder --chown=remix:remix /app/public ./public
+ENTRYPOINT [ "npm", "start"]

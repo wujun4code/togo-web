@@ -1,0 +1,17 @@
+services:
+
+  togo-web:
+    build:
+      dockerfile: ./Dockerfile
+      context: ./
+      network: host
+    image: togo-web:latest
+    container_name: togo-web
+    ports:
+      - '3000:3000'
+    network_mode: "host"
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4            
+    env_file:
+      - .env.production
