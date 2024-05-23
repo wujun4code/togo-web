@@ -126,13 +126,27 @@ export const Typing: FC<TypingProps> = ({ onPost, currentUser: initialCurrentUse
 
         const fetchSuggestingToMentionQuery = async () => {
             try {
-                const { suggestingToMention: { asMentioner: { edges } } } = await suggestingToMentionQuery();
+                const { suggestingToMention: { asMentioner: { edges }, topRobots } } = await suggestingToMentionQuery();
 
-                const suggestedMentionsData: SuggestionDataItem[] = edges.map((edge: any, index: number) => {
+                let suggestedMentionsData: SuggestionDataItem[] = edges.map((edge: any, index: number) => {
                     const { node: { mentioned } } = edge;
 
                     return { id: mentioned.snsName, display: `@${mentioned.friendlyName}` };
                 });
+
+                console.log(`suggestedMentionsData`, suggestedMentionsData);
+
+                if (Array.isArray(suggestedMentionsData) && suggestedMentionsData.length === 0 && topRobots.edges) {
+
+                    const suggestedMentionsRobots: SuggestionDataItem[] = topRobots.edges.map((edge: any, index: number) => {
+                        const { node: { relatedUser } } = edge;
+
+                        return { id: relatedUser.snsName, display: `@${relatedUser.friendlyName}` };
+                    });
+
+                    suggestedMentionsData = suggestedMentionsRobots;
+                }
+
                 setSuggestedMentions(suggestedMentionsData);
             } catch (error) {
                 console.error('Error fetching data:', error);

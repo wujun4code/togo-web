@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@components/index";
 import { useRouteLoaderData } from "@remix-run/react";
 import { IServerContext } from '../contracts';
 import { Separator } from "@components/ui/separator";
-import { CommentAddDialog, AvatarSNS, PostHeader } from '@components/index';
+import { CommentAddDialog, AvatarSNS, PostHeader, RenderContent } from '@components';
 import { syncMyProfile, getPublicProfile } from '../services/server/user';
 import { getFollowRelation } from '@services/server';
 
@@ -103,9 +103,9 @@ export default function Screen() {
                     <div className="flex flex-row gap-4 space-y-0 justify-between">
                         <PostHeader {...author} currentUser={currentUser} followRelation={followRelation} />
                     </div>
-                    <p className="leading-7 [&:not(:first-child)]:mt-4">
-                        {detail?.content}
-                    </p>
+                    <div className="leading-7 [&:not(:first-child)]:mt-4 cursor-pointer">
+                        <RenderContent text={detail?.content ?? ""} currentUser={currentUser} />
+                    </div>
                     <Separator />
                     <CommentListCards commentConnection={comments} postId={detail!.id} currentUser={currentUser} />
                 </div>

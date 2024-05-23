@@ -46,22 +46,24 @@ export default function Screen() {
                         alt="Towa Logo"
                         src="/logo-blue.svg"
                     />
-                    
+
                     <p className="text-2xl"> Welcome </p>
                     <p> Log in to ToGo to continue.</p>
 
-                    {google && <Form action="/auth/google" method="post">
-                        <Button className="w-44" type="submit">Login with Google</Button>
-                    </Form>}
+                    <div className="flex flex-col gap-2">
 
-                    {github && <Form action="/auth/github" method="post">
-                        <Button className="w-44" type="submit">Login with GitHub</Button>
-                    </Form>}
+                        {google && <Form action="/auth/google" method="post">
+                            <Button className="w-44" type="submit">Login with Google</Button>
+                        </Form>}
 
-                    {keycloak && <Form action="/auth/keycloak" method="post">
-                        <Button className="w-44" type="submit">Login with Keycloak</Button>
-                    </Form>}
+                        {github && <Form action="/auth/github" method="post">
+                            <Button className="w-44" type="submit">Login with GitHub</Button>
+                        </Form>}
 
+                        {keycloak && <Form action="/auth/keycloak" method="post">
+                            <Button className="w-44" type="submit">Login with Keycloak</Button>
+                        </Form>}
+                    </div>
                 </div>
             </div>
         </>
